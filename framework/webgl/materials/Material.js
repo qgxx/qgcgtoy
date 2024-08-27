@@ -1,6 +1,6 @@
 class Material {
-    #flatten_uniforms;
-    #flatten_attribs;
+    #flatten_uniforms;  // is Map.  [uniform_name, { type, value }]
+    #flatten_attribs;   // is Array. Vertex attribute
     #vsSrc;
     #fsSrc;
     constructor(uniforms, attribs, vsSrc, fsSrc, frameBuffer, lightIndex) {

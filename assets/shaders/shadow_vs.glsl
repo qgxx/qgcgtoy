@@ -12,8 +12,8 @@ varying highp vec2 vTextureCoord;
 
 void main(void) {
 
-  vNormal = aNormalPosition;
-  vTextureCoord = aTextureCoord;
+	vNormal = aNormalPosition;
+	vTextureCoord = aTextureCoord;
 
-  gl_Position = uLightMVP * vec4(aVertexPosition, 1.0);
+	gl_Position = uLightMVP * vec4(aVertexPosition, 1.0);
 }
