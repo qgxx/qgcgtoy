@@ -93,6 +93,7 @@ class WebGLRenderer {
                 let lightMVP = this.lights[l].entity.CalcLightMVP(translation, rotation, scale);
                 this.meshes[i].material.uniforms.uLightMVP = { type: 'matrix4fv', value: lightMVP };
                 this.meshes[i].material.uniforms.uLightPos = { type: '3fv', value: this.lights[l].entity.lightPos }; // 光源方向计算、光源强度衰减  
+                this.meshes[i].material.uniforms.uShadowClass = { type: '1i', value: guiParams.shadowClass };
                 this.meshes[i].draw(this.camera);
             }
 

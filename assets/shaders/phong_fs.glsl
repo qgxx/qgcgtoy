@@ -9,6 +9,7 @@ uniform vec3 uKs;
 uniform vec3 uLightPos;
 uniform vec3 uCameraPos;
 uniform vec3 uLightIntensity;
+uniform int uShadowClass;
 
 varying highp vec2 vTextureCoord;
 varying highp vec3 vFragPos;
@@ -216,9 +217,15 @@ void main(void) {
 	float filterRadiusUV = FILTER_RADIUS / SHADOW_MAP_SIZE;
 
 	// 硬阴影无PCF，最后参数传0
-	//visibility = useShadowMap(uShadowMap, vec4(shadowCoord, 1.0), nonePCFBiasC, 0.);
-	//visibility = PCF(uShadowMap, vec4(shadowCoord, 1.0), pcfBiasC, filterRadiusUV);
-	visibility = PCSS(uShadowMap, vec4(shadowCoord, 1.0), pcfBiasC);
+	if (uShadowClass == 0) {
+		visibility = useShadowMap(uShadowMap, vec4(shadowCoord, 1.0), nonePCFBiasC, 0.);
+	}
+	else if (uShadowClass == 1) {
+		visibility = PCF(uShadowMap, vec4(shadowCoord, 1.0), pcfBiasC, filterRadiusUV);
+	}
+	else if (uShadowClass == 2) {
+		visibility = PCSS(uShadowMap, vec4(shadowCoord, 1.0), pcfBiasC);
+	}
 
 	vec3 phongColor = blinnPhong();
 

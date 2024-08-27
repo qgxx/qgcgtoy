@@ -73,8 +73,19 @@ function GAMES202Main() {
 	var guiParams = {
 		modelTransX: 0,
 		modelTransY: 0,
-		modelTransZ: 0
+		modelTransZ: 0,
+		shadowClass: 2
 	}
+
+	const shadowModeSettings = {
+		mode: 'SM'
+	}
+
+	const shadowModeMap = new Map([
+		['SM', 0],
+		['PCF', 1],
+		['PCSS', 2]
+	]);
 
 	function createGUI() {
 		const gui = new dat.gui.GUI();
@@ -83,8 +94,13 @@ function GAMES202Main() {
 		panelModelTrans.add(guiParams, 'modelTransX').name('X');
 		panelModelTrans.add(guiParams, 'modelTransY').name('Y');
 		panelModelTrans.add(guiParams, 'modelTransZ').name('Z');
+		const shadowClass = gui.addFolder('Shadow Class');
+		shadowClass.add(shadowModeSettings, 'mode', ['SM', 'PCF', 'PCSS']).name('Select Mode').onChange(function(value){
+			guiParams.shadowClass = shadowModeMap.get(value);
+		});
 		panelModel.open();
 		panelModelTrans.open();
+		shadowClass.open();
 	}
 	createGUI();
 
