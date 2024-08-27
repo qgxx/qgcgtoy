@@ -3,18 +3,20 @@ class Material {
     #flatten_attribs;
     #vsSrc;
     #fsSrc;
-    // Uniforms is a map, attribs is a Array
-    constructor(uniforms, attribs, vsSrc, fsSrc) {
+    constructor(uniforms, attribs, vsSrc, fsSrc, frameBuffer, lightIndex) {
         this.uniforms = uniforms;
         this.attribs = attribs;
         this.#vsSrc = vsSrc;
         this.#fsSrc = fsSrc;
         
-        this.#flatten_uniforms = ['uModelViewMatrix', 'uProjectionMatrix', 'uCameraPos', 'uLightPos'];
+        this.#flatten_uniforms = ['uViewMatrix', 'uModelMatrix', 'uProjectionMatrix', 'uCameraPos', 'uLightPos'];
         for (let k in uniforms) {
             this.#flatten_uniforms.push(k);
         }
         this.#flatten_attribs = attribs;
+
+        this.frameBuffer = frameBuffer;
+        this.lightIndex = lightIndex;
     }
 
     setMeshAttribs(extraAttribs) {

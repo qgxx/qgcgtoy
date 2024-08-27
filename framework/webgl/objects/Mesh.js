@@ -1,10 +1,24 @@
+class TRSTransform {
+    constructor(translate = [0, 0, 0], rotate = [0, 0, 0], scale = [1, 1, 1]) {
+        this.translate = translate;
+		this.rotate = rotate;
+        this.scale = scale;
+    }
+}
 class Mesh {
-	constructor(verticesAttrib, normalsAttrib, texcoordsAttrib, indices) {
+	constructor(verticesAttrib, normalsAttrib, texcoordsAttrib, indices, transform) {
 		this.indices = indices;
 		this.count = indices.length;
 		this.hasVertices = false;
 		this.hasNormals = false;
 		this.hasTexcoords = false;
+
+		const modelTranslation = [transform.modelTransX, transform.modelTransY, transform.modelTransZ];
+		const modelRatation = [transform.modelRotateX, transform.modelRotateY, transform.modelRotateZ];
+		const modelScale = [transform.modelScaleX, transform.modelScaleY, transform.modelScaleZ];
+		let meshTrans = new TRSTransform(modelTranslation, modelRatation, modelScale);
+		this.transform = meshTrans;
+
 		let extraAttribs = [];
 
 		if (verticesAttrib != null) {
@@ -24,7 +38,7 @@ class Mesh {
 		}
 	}
 
-	static cube() {
+	static cube(transform) {
 		const positions = [
 			// Front face
 			-1.0, -1.0, 1.0,
@@ -70,6 +84,7 @@ class Mesh {
 			16, 17, 18, 16, 18, 19,   // right
 			20, 21, 22, 20, 22, 23,   // left
 		];
-		return new Mesh({ name: 'aVertexPosition', array: new Float32Array(positions) }, null, null, indices);
+
+		return new Mesh({ name: 'aVertexPosition', array: new Float32Array(positions) }, null, null, indices, transform);
 	}
 }

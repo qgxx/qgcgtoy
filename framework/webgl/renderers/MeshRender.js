@@ -4,8 +4,9 @@ class MeshRender {
 	#normalBuffer;
 	#texcoordBuffer;
 	#indicesBuffer;
-	
+
 	constructor(gl, mesh, material) {
+
 		this.gl = gl;
 		this.mesh = mesh;
 		this.material = material;
@@ -45,17 +46,8 @@ class MeshRender {
 		this.shader = this.material.compile(gl);
 	}
 
-	draw(camera, transform) {
+	bindGeometryInfo() {
 		const gl = this.gl;
-
-		let modelViewMatrix = mat4.create();
-		let projectionMatrix = mat4.create();
-
-		camera.updateMatrixWorld();
-		mat4.invert(modelViewMatrix, camera.matrixWorld.elements);
-		mat4.translate(modelViewMatrix, modelViewMatrix, transform.translate);
-		mat4.scale(modelViewMatrix, modelViewMatrix, transform.scale);
-		mat4.copy(projectionMatrix, camera.projectionMatrix.elements);
 
 		if (this.mesh.hasVertices) {
 			const numComponents = 3;
@@ -112,24 +104,51 @@ class MeshRender {
 		}
 
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.#indicesBuffer);
+	}
 
-		gl.useProgram(this.shader.program.glShaderProgram);
+	bindCameraParameters(camera) {
+		const gl = this.gl;
+
+		let modelMatrix = mat4.create();
+		let viewMatrix = mat4.create();
+		let projectionMatrix = mat4.create();
+		// Model transform
+		mat4.identity(modelMatrix);
+		mat4.translate(modelMatrix, modelMatrix, this.mesh.transform.translate);
+		mat4.rotateX(modelMatrix, modelMatrix, this.mesh.transform.rotate[0])
+        mat4.rotateY(modelMatrix, modelMatrix, this.mesh.transform.rotate[1])
+        mat4.rotateZ(modelMatrix, modelMatrix, this.mesh.transform.rotate[2])
+		mat4.scale(modelMatrix, modelMatrix, this.mesh.transform.scale);
+		// View transform
+		camera.updateMatrixWorld();
+		mat4.invert(viewMatrix, camera.matrixWorld.elements);
+		// mat4.lookAt(viewMatrix, cameraPosition, [0,0,0], [0,1,0]);
+		// Projection transform
+		mat4.copy(projectionMatrix, camera.projectionMatrix.elements);
 
 		gl.uniformMatrix4fv(
 			this.shader.program.uniforms.uProjectionMatrix,
 			false,
 			projectionMatrix);
 		gl.uniformMatrix4fv(
-			this.shader.program.uniforms.uModelViewMatrix,
+			this.shader.program.uniforms.uModelMatrix,
 			false,
-			modelViewMatrix);
-
-		// Specific the camera uniforms
+			modelMatrix);
+		gl.uniformMatrix4fv(
+			this.shader.program.uniforms.uViewMatrix,
+			false,
+			viewMatrix);
 		gl.uniform3fv(
 			this.shader.program.uniforms.uCameraPos,
 			[camera.position.x, camera.position.y, camera.position.z]);
+	}
 
+	bindMaterialParameters() {
+		const gl = this.gl;
+
+		let textureNum = 0;
 		for (let k in this.material.uniforms) {
+
 			if (this.material.uniforms[k].type == 'matrix4fv') {
 				gl.uniformMatrix4fv(
 					this.shader.program.uniforms[k],
@@ -148,12 +167,37 @@ class MeshRender {
 					this.shader.program.uniforms[k],
 					this.material.uniforms[k].value);
 			} else if (this.material.uniforms[k].type == 'texture') {
-				gl.activeTexture(gl.TEXTURE0);
+				gl.activeTexture(gl.TEXTURE0 + textureNum);
 				gl.bindTexture(gl.TEXTURE_2D, this.material.uniforms[k].value.texture);
-				gl.uniform1i(this.shader.program.uniforms[k], 0);
+				gl.uniform1i(this.shader.program.uniforms[k], textureNum);
+				textureNum += 1;
 			}
 		}
+	}
 
+	draw(camera) {
+		const gl = this.gl;
+
+		gl.bindFramebuffer(gl.FRAMEBUFFER, this.material.frameBuffer);
+		if (this.material.frameBuffer != null) {
+			// Shadow map
+			gl.viewport(0.0, 0.0, resolution, resolution);
+		} else {
+			gl.viewport(0.0, 0.0, window.screen.width, window.screen.height);
+		}
+
+		gl.useProgram(this.shader.program.glShaderProgram);
+
+		// Bind geometry information
+		this.bindGeometryInfo();
+
+		// Bind Camera parameters
+		this.bindCameraParameters(camera);
+
+		// Bind material parameters
+		this.bindMaterialParameters();
+
+		// Draw
 		{
 			const vertexCount = this.mesh.count;
 			const type = gl.UNSIGNED_SHORT;
