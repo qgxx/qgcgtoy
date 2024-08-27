@@ -17,7 +17,7 @@ class WebGLRenderer {
     addMeshRender(mesh) { this.meshes.push(mesh); }
     addShadowMeshRender(mesh) { this.shadowMeshes.push(mesh); }
 
-    render(time, deltaime) {
+    render(time, deltaime, guiParams) {
         const gl = this.gl;
 
         gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
@@ -32,6 +32,14 @@ class WebGLRenderer {
             if(this.meshes[i].mesh.count > 10)
             {
                 this.meshes[i].mesh.transform.rotate[1] = this.meshes[i].mesh.transform.rotate[1] + degrees2Radians(10) * deltaime;
+                this.meshes[i].mesh.transform.translate[0] = guiParams.modelTransX;
+                this.meshes[i].mesh.transform.translate[1] = guiParams.modelTransY;
+                if (this.meshes[i].mesh.meshName == 'Marry1') {
+                    this.meshes[i].mesh.transform.translate[2] = guiParams.modelTransZ;
+                }
+                else if (this.meshes[i].mesh.meshName == 'Marry2') {
+                    this.meshes[i].mesh.transform.translate[2] = guiParams.modelTransZ - 50.0;
+                }
             }
         }
 
@@ -84,7 +92,7 @@ class WebGLRenderer {
                 let scale = this.meshes[i].mesh.transform.scale;
                 let lightMVP = this.lights[l].entity.CalcLightMVP(translation, rotation, scale);
                 this.meshes[i].material.uniforms.uLightMVP = { type: 'matrix4fv', value: lightMVP };
-                this.meshes[i].material.uniforms.uLightPos = { type: '3fv', value: this.lights[l].entity.lightPos }; // 光源方向计算、光源强度衰减
+                this.meshes[i].material.uniforms.uLightPos = { type: '3fv', value: this.lights[l].entity.lightPos }; // 光源方向计算、光源强度衰减  
                 this.meshes[i].draw(this.camera);
             }
 

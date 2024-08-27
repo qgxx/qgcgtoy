@@ -6,7 +6,7 @@ class TRSTransform {
     }
 }
 class Mesh {
-	constructor(verticesAttrib, normalsAttrib, texcoordsAttrib, indices, transform) {
+	constructor(verticesAttrib, normalsAttrib, texcoordsAttrib, indices, transform, meshName) {
 		this.indices = indices;
 		this.count = indices.length;
 		this.hasVertices = false;
@@ -18,6 +18,7 @@ class Mesh {
 		const modelScale = [transform.modelScaleX, transform.modelScaleY, transform.modelScaleZ];
 		let meshTrans = new TRSTransform(modelTranslation, modelRatation, modelScale);
 		this.transform = meshTrans;
+		this.meshName = meshName;
 
 		let extraAttribs = [];
 

@@ -66,14 +66,25 @@ function GAMES202Main() {
 	let obj2Transform = setTransform(40, 0, -40, 0, 0, 0, 10, 10, 10);
 	//Edit End
 
-	loadOBJ(renderer, '../../../assets/models/mary/', 'Marry', 'PhongMaterial', obj1Transform);
-	loadOBJ(renderer, '../../../assets/models/mary/', 'Marry', 'PhongMaterial', obj2Transform);
+	loadOBJ(renderer, '../../../assets/models/mary/', 'Marry', 'PhongMaterial', obj1Transform, 'Marry1');
+	loadOBJ(renderer, '../../../assets/models/mary/', 'Marry', 'PhongMaterial', obj2Transform, 'Marry2');
 	loadOBJ(renderer, '../../../assets/models/floor/', 'floor', 'PhongMaterial', floorTransform);
+
+	var guiParams = {
+		modelTransX: 0,
+		modelTransY: 0,
+		modelTransZ: 0
+	}
 
 	function createGUI() {
 		const gui = new dat.gui.GUI();
 		const panelModel = gui.addFolder('Model properties');
+		const panelModelTrans = panelModel.addFolder('Translation');
+		panelModelTrans.add(guiParams, 'modelTransX').name('X');
+		panelModelTrans.add(guiParams, 'modelTransY').name('Y');
+		panelModelTrans.add(guiParams, 'modelTransZ').name('Z');
 		panelModel.open();
+		panelModelTrans.open();
 	}
 	createGUI();
 
@@ -83,7 +94,7 @@ function GAMES202Main() {
 	function mainLoop(now) {
 		cameraControls.update();
 		let deltaime = (now - prevTime) / 1000;
-		renderer.render(now, deltaime);
+		renderer.render(now, deltaime, guiParams);
 		requestAnimationFrame(mainLoop);
 		prevTime = now;
 	}
