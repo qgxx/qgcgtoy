@@ -6,10 +6,10 @@
 
     <!-- Render the visible surface normals -->
     <integrator type="prt">
-		<string name="type" value="interreflection" />
+		<string name="type" value="interreflection" /> <!--value: unshadowed, shadowed, interreflection-->
 		<integer name="bounce" value="2" />
 		<integer name="PRTSampleCount" value="100" />
-		<string name="cubemap" value="cubemap/Indoor" />
+		<string name="cubemap" value="cubemap/CornellBox" />
 	</integrator>
 
     <!-- Load the Stanford bunny (https://graphics.stanford.edu/data/3Dscanrep/) -->

@@ -61,7 +61,7 @@ function GAMES202Main() {
 
 	loadOBJ(renderer, '../../../assets/models/mary/', 'Marry', 'PhongMaterial', obj1Transform, 'Marry1');
 	loadOBJ(renderer, '../../../assets/models/mary/', 'Marry', 'PhongMaterial', obj2Transform, 'Marry2');
-	loadOBJ(renderer, '../../../assets/models/floor/', 'floor', 'PhongMaterial', floorTransform);
+	loadOBJ(renderer, '../../../assets/models/floor/', 'floor', 'PhongMaterial', floorTransform, 'floor1');
 
 	var guiParams = {
 		modelTransX: 0,
@@ -71,7 +71,7 @@ function GAMES202Main() {
 	}
 
 	const shadowModeSettings = {
-		mode: 'SM'
+		mode: 'PCSS'
 	}
 
 	const shadowModeMap = new Map([

@@ -1,0 +1,17 @@
+{
+    "configurations": [
+        {
+            "name": "PRT",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/external/nori/nori.exe",
+            "args": [
+                "${workspaceFolder}/external/nori/scenes/prt.xml"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false
+        }
+    ]
+}

@@ -91,7 +91,7 @@ void uniformDiskSamples( const in vec2 randomSeed ) {
 	}
 }
 
-//自适应Shadow Bias算法 https://zhuanlan.zhihu.com/p/370951892
+// Adaptively Shadow Bias
 float getShadowBias(float c, float filterRadiusUV){
 	vec3 normal = normalize(vNormal);
 	vec3 lightDir = normalize(uLightPos - vFragPos);
