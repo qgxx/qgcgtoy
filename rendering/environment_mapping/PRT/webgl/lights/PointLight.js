@@ -7,7 +7,7 @@ class PointLight {
         this.hasShadowMap = hasShadowMap;
         this.fbo = new FBO(gl);
         if (!this.fbo) {
-            console.log("无法设置帧缓冲区对象");
+            console.log("Can't set FBO.");
             return;
         }
     }

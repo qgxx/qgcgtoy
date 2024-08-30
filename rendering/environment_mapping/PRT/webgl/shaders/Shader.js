@@ -1,5 +1,4 @@
 class Shader {
-
     constructor(gl, vsSrc, fsSrc, shaderLocations) {
         this.gl = gl;
         const vs = this.compileShader(vsSrc, gl.VERTEX_SHADER);

@@ -59,11 +59,9 @@ function loadOBJ(renderer, path, name, objMaterial, transform) {
 									break;
 								// TODO: Add your PRTmaterial here
 
-								//Edit Start
 								case 'PRTMaterial':
 									material = buildPRTMaterial("./webgl/shaders/prtVertex.glsl", "./webgl/shaders/prtFragment.glsl");
 									break;
-								//Edit End
 
 								case 'SkyBoxMaterial':
 									material = buildSkyBoxMaterial("./webgl/shaders/SkyBoxVertex.glsl", "./webgl/shaders/SkyBoxFragment.glsl");

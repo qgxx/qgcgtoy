@@ -6,18 +6,15 @@ var envmap = [
 	'../../../assets/models/cubemap/GraceCathedral',
 	'../../../assets/models/cubemap/Indoor',
 	'../../../assets/models/cubemap/Skybox',
-	// Edit Start
 	'../../../assets/models/cubemap/CornellBox',
-	// Edit End
 ];
 
 var guiParams = {
-	envmapId: 0
+	envmapId: 3
 }
 
 var cubeMaps = [];
 
-//生成的纹理的分辨率，纹理必须是标准的尺寸 256*256 1024*1024  2048*2048
 var resolution = 2048;
 
 let envMapPass = null;
@@ -69,8 +66,6 @@ async function GAMES202Main() {
 
 	// Add shapes
 	let skyBoxTransform = setTransform(0, 50, 50, 150, 150, 150);
-	let boxTransform = setTransform(0, 0, 0, 200, 200, 200);
-	let box2Transform = setTransform(0, -10, 0, 20, 20, 20);
 
 	for (let i = 0; i < envmap.length; i++) {
 		let urls = [
@@ -117,20 +112,13 @@ async function GAMES202Main() {
 	}
 
 	// TODO: load model - Add your Material here
-	// loadOBJ(renderer, 'assets/bunny/', 'bunny', 'addYourPRTMaterial', boxTransform);
-	// loadOBJ(renderer, 'assets/bunny/', 'bunny', 'addYourPRTMaterial', box2Transform);
-
-	// Edit Start
 	let maryTransform = setTransform(0, -35, 0, 20, 20, 20);
 	loadOBJ(renderer, '../../../assets/models/mary/', 'mary', 'PRTMaterial', maryTransform);
-	// Edit End
 
 	function createGUI() {
 		const gui = new dat.gui.GUI();
 		const panelModel = gui.addFolder('Switch Environemtn Map');
-		// Edit Start
 		panelModel.add(guiParams, 'envmapId', { 'GraceGathedral': 0, 'Indoor': 1, 'Skybox': 2, 'CornellBox': 3}).name('Envmap Name');
-		// Edit End
 		panelModel.open();
 	}
 

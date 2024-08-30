@@ -18,6 +18,7 @@ class WebGLRenderer {
     addShadowMeshRender(mesh) { this.shadowMeshes.push(mesh); }
 
     render() {
+        console.log(this.meshes.length, this.shadowMeshes.length, this.lights.length)
         const gl = this.gl;
 
         gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque

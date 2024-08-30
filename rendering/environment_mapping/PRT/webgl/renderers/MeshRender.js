@@ -1,6 +1,4 @@
-
 class MeshRender {
-
 	#vertexBuffer;
 	#normalBuffer;
 	#texcoordBuffer;
