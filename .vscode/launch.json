@@ -1,7 +1,7 @@
 {
     "configurations": [
         {
-            "name": "PRT",
+            "name": "Process PRT's SH",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/external/nori/nori.exe",
@@ -12,6 +12,19 @@
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false
-        }
+        },
+        {
+            "name": "Screen Space Ambient Occlusion",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Release/ssao.exe",
+            "args": [
+                ""
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false
+        },
     ]
 }

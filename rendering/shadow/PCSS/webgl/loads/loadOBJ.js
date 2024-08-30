@@ -51,8 +51,8 @@ function loadOBJ(renderer, path, name, objMaterial, transform, objName) {
 								let light = renderer.lights[i].entity;
 								switch (objMaterial) {
 									case 'PhongMaterial':
-										material = buildPhongMaterial(colorMap, mat.specular.toArray(), light, Translation, Rotation, Scale, i, "../../../assets/shaders/phong_vs.glsl", "../../../assets/shaders/phong_fs.glsl");
-										shadowMaterial = buildShadowMaterial(light, Translation, Rotation, Scale, i, "../../../assets/shaders/shadow_vs.glsl", "../../../assets/shaders/shadow_fs.glsl");
+										material = buildPhongMaterial(colorMap, mat.specular.toArray(), light, Translation, Rotation, Scale, i, "./webgl/shaders/phong_vs.glsl", "./webgl/shaders/phong_fs.glsl");
+										shadowMaterial = buildShadowMaterial(light, Translation, Rotation, Scale, i, "./webgl/shaders/shadow_vs.glsl", "./webgl/shaders/shadow_fs.glsl");
 										break;
 								}
 							

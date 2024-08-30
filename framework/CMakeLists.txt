@@ -1,0 +1,7 @@
+add_subdirectory(common)
+# add_subdirectory(interface)
+# add_subdirectory(manager)
+# add_subdirectory(materials)
+# add_subdirectory(math)
+# add_subdirectory(object)
+# add_subdirectory(utils)

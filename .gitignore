@@ -1,0 +1,6 @@
+build/
+external/build
+external/bin
+external/lib
+external/include
+external/share
