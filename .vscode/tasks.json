@@ -1,0 +1,32 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build External Dependencies",
+            "type": "shell",
+            "windows": {
+                "command": "script\\build_assimp.bat && script\\build_glad.bat && script\\build_glfw.bat && script\\build_glm.bat"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "group": "build"
+        },
+        {
+            "label": "Build Rendering",
+            "type": "shell",
+            "windows": {
+                "command": "script\\build.bat"
+            },
+            "problemMatcher": [
+                "$msCompile"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        }
+    ]
+}

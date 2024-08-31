@@ -7,10 +7,10 @@ and hold down Ctrl or Shift key while dragging the left mouse button to move the
 ### ShadowMapping
 ![ShadowMapping](./assets/results/SM.png)
 
-### PCF
+### Percentage Closer Filering
 ![PCF](./assets/results/PCF.png)
 
-### PCSS
+### Percentage Closer Soft Shadow
 ![PCSS](./assets/results/PCSS.png)  
 
 ## Environment Mapping
@@ -24,6 +24,11 @@ and hold down Ctrl or Shift key while dragging the left mouse button to move the
 You can move camera by `w`,`s`,`a`,`d`,
 and drag the left mouse button to rotate the camera.
 ![SSAO](./assets/results/SSAO.png)
+
+## Physically Based Rendering
+
+### Cook-Torrance BRDF PBR
+![Cook-Torrance BRDF](./assets/results/Cook-Torrance%20BRDF.png)
 
 ---
 # References

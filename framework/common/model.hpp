@@ -143,7 +143,7 @@ private:
             }
             if(!skip) {
                 Texture texture;
-                texture.id = TextureFromFile(str.C_Str(), this->directory);
+                texture.id = loadTexture((directory + '/' + str.C_Str()).c_str());
                 texture.type = type;
                 texture.path = str.C_Str();
 

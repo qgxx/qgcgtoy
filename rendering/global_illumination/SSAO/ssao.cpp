@@ -26,7 +26,7 @@ public:
         m_nargc = argc;
         m_ppargv = argv;
     }
-    int  getCommandLineArgumentsCount() const override {
+    int getCommandLineArgumentsCount() const override {
         return m_nargc;
     }
     const char* getCommandLineArgument(int index) const override {
@@ -49,7 +49,7 @@ private:
     Shader* shaderSSAO;
     Shader* shaderSSAOBlur;
 
-    Model* backpack;
+    Model* test_model;
 
     unsigned int gBuffer;
     unsigned int gPosition, gNormal, gAlbedo;
@@ -133,7 +133,7 @@ int SSAO::initialize() {
 
     // load models
     // -----------
-    backpack = new Model(getCommandLineArgument(1));
+    test_model = new Model(getCommandLineArgument(1));
 
     // configure g-buffer framebuffer
     // ------------------------------
@@ -252,6 +252,8 @@ int SSAO::initialize() {
     shaderSSAO->setInt("texNoise", 2);
     shaderSSAOBlur->use();
     shaderSSAOBlur->setInt("ssaoInput", 0);
+
+    return 1;
 }
 
 void SSAO::finalize() {
@@ -292,13 +294,13 @@ void SSAO::tick() {
         shaderGeometryPass->setInt("invertedNormals", 1); // invert normals as we're inside the cube
         renderCube();
         shaderGeometryPass->setInt("invertedNormals", 0); 
-        // backpack model on the floor
+        // test_model model on the floor
         model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.5f, 0.0));
         model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0, 0.0, 0.0));
         model = glm::scale(model, glm::vec3(1.0f));
         shaderGeometryPass->setMat4("model", model);
-        backpack->Draw(*shaderGeometryPass);
+        test_model->Draw(*shaderGeometryPass);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 

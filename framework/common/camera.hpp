@@ -1,11 +1,11 @@
-#ifndef CAMERA_H
-#define CAMERA_H
+#pragma once
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-// Defines several possible options for camera movement. Used as abstraction to stay away from window-system specific input methods
+namespace cg {
+
 enum Camera_Movement {
     FORWARD,
     BACKWARD,
@@ -13,15 +13,12 @@ enum Camera_Movement {
     RIGHT
 };
 
-// Default camera values
 const float YAW         = -90.0f;
 const float PITCH       =  0.0f;
 const float SPEED       =  2.5f;
 const float SENSITIVITY =  0.1f;
 const float ZOOM        =  45.0f;
 
-
-// An abstract camera class that processes input and calculates the corresponding Euler Angles, Vectors and Matrices for use in OpenGL
 class Camera
 {
 public:
@@ -125,4 +122,5 @@ private:
         Up    = glm::normalize(glm::cross(Right, Front));
     }
 };
-#endif
+
+} // namespace cg

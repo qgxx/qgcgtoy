@@ -26,5 +26,18 @@
             "environment": [],
             "externalConsole": false
         },
+        {
+            "name": "Cook-Torrance BRDF PBR",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Release/cook-torrance_brdf.exe",
+            "args": [
+                "assets/models/backpack/backpack.obj"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false
+        }
     ]
 }
