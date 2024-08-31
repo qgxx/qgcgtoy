@@ -133,7 +133,7 @@ int SSAO::initialize() {
 
     // load models
     // -----------
-    backpack = new Model("assets/models/backpack/backpack.obj");
+    backpack = new Model(getCommandLineArgument(1));
 
     // configure g-buffer framebuffer
     // ------------------------------
