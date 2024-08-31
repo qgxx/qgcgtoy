@@ -19,7 +19,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/Release/ssao.exe",
             "args": [
-                ""
+                "assets/models/backpack/backpack.obj"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
