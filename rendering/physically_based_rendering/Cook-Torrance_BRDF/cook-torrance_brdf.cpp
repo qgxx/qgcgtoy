@@ -192,32 +192,33 @@ void CookTorranceBRDF::tick() {
     // render rows*column number of spheres with material properties defined by textures (they all have the same material properties)
     glm::mat4 model = glm::mat4(1.0f);
 
-    for (int row = 0; row < nrRows; ++row)
-    {
-        for (int col = 0; col < nrColumns; ++col)
-        {
+    PRTShader->use();
+    for (unsigned int i = 0; i < LIGHT_COUNT; ++i) {
+        glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(glfwGetTime() * 5.0) * 5.0, cos(glfwGetTime() * 5.0) * 5.0, 0.0);
+        PRTShader->setVec3("lightPositions[" + std::to_string(i) + "]", newPos);
+        PRTShader->setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, newPos);
+        model = glm::scale(model, glm::vec3(0.5f));
+        lightShader[i]->use();
+        lightShader[i]->setMat4("model", model);
+        lightShader[i]->setVec3("lightColor", lightColors[i]);
+        renderSphere();
+    }
+
+    PRTShader->use();
+    for (int row = 0; row < nrRows; ++row) {
+        for (int col = 0; col < nrColumns; ++col) {
             model = glm::mat4(1.0f);
             model = glm::translate(model, glm::vec3(
                 (float)(col - (nrColumns / 2)) * spacing,
                 (float)(row - (nrRows / 2)) * spacing,
                 0.0f
             ));
-            PRTShader->use();
             PRTShader->setMat4("model", model);
             PRTShader->setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
-            for (unsigned int i = 0; i < LIGHT_COUNT; ++i) {
-                glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(glfwGetTime() * 5.0) * 5.0, cos(glfwGetTime() * 5.0) * 5.0, 0.0);
-                PRTShader->setVec3("lightPositions[" + std::to_string(i) + "]", newPos);
-                PRTShader->setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
-
-                model = glm::mat4(1.0f);
-                model = glm::translate(model, newPos);
-                model = glm::scale(model, glm::vec3(0.5f));
-                lightShader[i]->use();
-                lightShader[i]->setMat4("model", model);
-                lightShader[i]->setVec3("lightColor", lightColors[i]);
-                renderSphere();
-            }
+            
             PRTShader->use();
             renderSphere();
         }

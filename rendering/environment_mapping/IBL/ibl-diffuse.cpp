@@ -331,12 +331,25 @@ void IBL::tick() {
 
     // render rows*column number of spheres with varying metallic/roughness values scaled by rows and columns respectively
     glm::mat4 model = glm::mat4(1.0f);
-    for (int row = 0; row < nrRows; ++row)
-    {
+    for (unsigned int i = 0; i < LIGHT_COUNT; ++i) {
+        glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(glfwGetTime() * 5.0) * 5.0, 0.0, 0.0);
         pbrShader->use();
+        pbrShader->setVec3("lightPositions[" + std::to_string(i) + "]", newPos);
+        pbrShader->setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
+
+        lightShader->use();
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, newPos);
+        model = glm::scale(model, glm::vec3(0.5f));
+        lightShader->setMat4("model", model);
+        lightShader->setVec3("lightColor", lightColors[i]);
+        renderSphere();
+    }
+
+    pbrShader->use();
+    for (int row = 0; row < nrRows; ++row) {
         pbrShader->setFloat("metallic", (float)row / (float)nrRows);
-        for (int col = 0; col < nrColumns; ++col)
-        {
+        for (int col = 0; col < nrColumns; ++col) {
             // we clamp the roughness to 0.025 - 1.0 as perfectly smooth surfaces (roughness of 0.0) tend to look a bit off
             // on direct lighting.
             pbrShader->setFloat("roughness", glm::clamp((float)col / (float)nrColumns, 0.05f, 1.0f));
@@ -349,21 +362,7 @@ void IBL::tick() {
             ));
             pbrShader->setMat4("model", model);
             pbrShader->setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
-            for (unsigned int i = 0; i < LIGHT_COUNT; ++i) {
-                glm::vec3 newPos = lightPositions[i] + glm::vec3(sin(glfwGetTime() * 5.0) * 5.0, 0.0, 0.0);
-                pbrShader->setVec3("lightPositions[" + std::to_string(i) + "]", newPos);
-                pbrShader->setVec3("lightColors[" + std::to_string(i) + "]", lightColors[i]);
-
-                model = glm::mat4(1.0f);
-                model = glm::translate(model, newPos);
-                model = glm::scale(model, glm::vec3(0.5f));
-                lightShader->use();
-                lightShader->setMat4("model", model);
-                lightShader->setVec3("lightColor", lightColors[i]);
-                renderSphere();
-                pbrShader->use();
-                renderSphere();
-            }
+            renderSphere();
         }
     }
 

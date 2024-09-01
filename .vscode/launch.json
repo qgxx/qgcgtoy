@@ -40,12 +40,25 @@
             "externalConsole": false
         },
         {
-            "name": "Imaged Based Lighting",
+            "name": "Imaged Based Lighting(diffuse)",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/Release/ibl-diffuse.exe",
             "args": [
                 "assets/textures/hdr/studio_small.hdr"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false
+        },
+        {
+            "name": "Imaged Based Lighting(specular)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Release/ibl-specular.exe",
+            "args": [
+                "assets/textures/hdr/newport_loft.hdr"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

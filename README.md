@@ -18,9 +18,11 @@ and hold down Ctrl or Shift key while dragging the left mouse button to move the
 ### Precomputed Radiance Transfer
 ![PRT](./assets/results/PRT.png)
 
-### Imaged Based Lighting
-![IBL](./assets/results/IBL.png)
-![IBL](./assets/results/IBL.gif)
+### Imaged Based Lighting(diffuse)
+![IBL-diffuse](./assets/results/IBL-diffuse.gif)
+
+### Imaged Based Lighting(specular)
+![IBL-specular](./assets/results/IBL-specular.gif)
 
 ## Global Illumination
 
@@ -32,7 +34,6 @@ and drag the left mouse button to rotate the camera.
 ## Physically Based Rendering
 
 ### Cook-Torrance BRDF PBR
-![Cook-Torrance BRDF](./assets/results/Cook-Torrance%20BRDF.png)
 ![Cook-Torrance BRDF](./assets/results/Cook-Torrance%20BRDF.gif)
 
 # External Dependencies
