@@ -9,8 +9,6 @@
 
 namespace cg {
 
-
-
 unsigned int loadTexture(const char *path, bool gamma = false) {
     unsigned int textureID;
     glGenTextures(1, &textureID);

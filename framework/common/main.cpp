@@ -10,12 +10,12 @@ int main(int argc, char** argv) {
 
 	g_pApp->setCommandLineParameters(argc, argv);
 
-	if (!(ret = g_pApp->initialize())) {
-		printf("App Initialize failed, will exit now.");
+	if (ret = g_pApp->initialize() != 1) {
+		printf("App Initialize failed, will exit now.\n");
 		return ret;
 	}
 	else {
-		printf("App Initialize succees.");
+		printf("App Initialize succees.\n");
 	}
 
 	while (!g_pApp->isQuit()) {

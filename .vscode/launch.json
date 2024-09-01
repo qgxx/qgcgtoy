@@ -32,7 +32,20 @@
             "request": "launch",
             "program": "${workspaceFolder}/build/Release/cook-torrance_brdf.exe",
             "args": [
-                "assets/models/backpack/backpack.obj"
+                ""
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false
+        },
+        {
+            "name": "Imaged Based Lighting",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Release/ibl.exe",
+            "args": [
+                "assets/textures/hdr/studio_small.hdr"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
