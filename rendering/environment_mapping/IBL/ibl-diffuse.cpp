@@ -138,7 +138,7 @@ int IBL::initialize() {
 
     pbrShader->use();
     pbrShader->setInt("irradianceMap", 0);
-    pbrShader->setVec3("albedo", 1.0f, 1.0f, 1.0f);
+    pbrShader->setVec3("albedo", 0.95f, 0.64f, 0.54f);
     pbrShader->setFloat("ao", 1.0f);
 
     backgroundShader->use();

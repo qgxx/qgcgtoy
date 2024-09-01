@@ -43,7 +43,7 @@
             "name": "Imaged Based Lighting",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/Release/ibl.exe",
+            "program": "${workspaceFolder}/build/Release/ibl-diffuse.exe",
             "args": [
                 "assets/textures/hdr/studio_small.hdr"
             ],
