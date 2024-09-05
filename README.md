@@ -36,6 +36,9 @@ and drag the left mouse button to rotate the camera.
 ### Cook-Torrance BRDF PBR
 ![Cook-Torrance BRDF](./assets/results/Cook-Torrance%20BRDF.gif)
 
+### LTC Area Light Source
+![LTC Area Light Source](./assets/results/ltc-area_light.png)
+
 # External Dependencies
 Assimp  
 glfw  

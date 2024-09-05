@@ -28,6 +28,7 @@ add_subdirectory(rendering/global_illumination/SSAO)
 add_subdirectory(rendering/environment_mapping/IBL)
 add_subdirectory(rendering/non-photorealistic-rendering)
 add_subdirectory(rendering/physically_based_rendering/Cook-Torrance_BRDF)
+add_subdirectory(rendering/physically_based_rendering/LTC)
 
 MESSAGE( STATUS "assimp-vc143-mt_LIBRARY: " ${assimp-vc143-mt_LIBRARY} )
 MESSAGE( STATUS "glfw3_LIBRARY: " ${glfw3_LIBRARY} )
