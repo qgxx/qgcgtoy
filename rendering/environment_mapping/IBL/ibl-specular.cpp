@@ -614,7 +614,6 @@ void IBL::tick() {
 
     // render BRDF map to screen
     // brdfShader->use();
-    // brdfShader->setMat4("model", model);
     // renderQuad();
 
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
