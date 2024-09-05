@@ -38,6 +38,8 @@ private:
     GLFWwindow* window;
 
     Shader* toonShader;
+    Shader* goochShader;
+    Shader* sobelShader;
     Shader* lightShader;
 
     Model* teapot;
@@ -107,6 +109,7 @@ int ToonShading::initialize() {
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     toonShader = new Shader("assets/shaders/GLSL/donothing_vert.glsl", "assets/shaders/GLSL/toonshading_frag.glsl");
+    goochShader = new Shader("assets/shaders/GLSL/donothing_vert.glsl", "assets/shaders/GLSL/goochshading_frag.glsl");
     lightShader = new Shader("assets/shaders/GLSL/light_vert.glsl", "assets/shaders/GLSL/light_frag.glsl");
 
     teapot = new Model("assets/models/teapot/teapot.obj");
@@ -140,7 +143,7 @@ void ToonShading::tick() {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glm::vec3 newPos = lightPosition + glm::vec3(sin(glfwGetTime() * 5.0) * 5.0, 0.0, cos(glfwGetTime() * 5.0) * 5.0);
+    glm::vec3 newPos = lightPosition + glm::vec3(sin(glfwGetTime()) * 5.0, 0.0, cos(glfwGetTime()) * 5.0);
     toonShader->use();
     toonShader->setVec3("lightPos", newPos);
     toonShader->setVec3("lightColor", lightColor);

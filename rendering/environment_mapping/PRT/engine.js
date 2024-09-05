@@ -80,7 +80,7 @@ async function GAMES202Main() {
 		await cubeMaps[i].init();
 	}
 	// load skybox
-	loadOBJ(renderer, '../../../assets/models/testObj/', 'testObj', 'SkyBoxMaterial', skyBoxTransform);
+	loadOBJ(renderer, '../../../assets/models/cube/', 'cube', 'SkyBoxMaterial', skyBoxTransform);
 
 	// file parsing
 	for (let i = 0; i < envmap.length; i++) {
