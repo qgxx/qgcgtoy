@@ -66,10 +66,10 @@
             "externalConsole": false
         },
         {
-            "name": "Toon Shading",
+            "name": "Style Shading",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/Release/toon.exe",
+            "program": "${workspaceFolder}/build/Release/style_shading.exe",
             "args": [
                 ""
             ],

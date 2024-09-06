@@ -3,13 +3,25 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include <imgui/imgui_impl_glfw.h>
+#include <imgui/imgui_impl_opengl3.h>
+
+#include <stdio.h>
+#include <iostream>
+#include <vector>
+#include <string>
+
 #include "model.hpp"
 #include "shader.hpp"
 #include "camera.hpp"
 
 namespace cg {
 
-class ToonShading : public IApplication {
+class StyleShading : public IApplication {
 public:
     virtual int initialize();
     virtual void finalize();
@@ -40,6 +52,7 @@ private:
     Shader* toonShader;
     Shader* goochShader;
     Shader* sobelShader;
+    Shader* hatchingShader;
     Shader* lightShader;
 
     Model* teapot;
@@ -47,13 +60,19 @@ private:
     glm::vec3 lightPosition = glm::vec3(0.0f);
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
 
+    unsigned int uboMatrices;
+    unsigned int goochFBO;
+    unsigned int intermediateFBO;
+
 };
 
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void processInput(GLFWwindow *window);
+void configureFBO(GLFWwindow* window, GLuint* FBO, std::vector<GLuint*>* textures, bool multisample, bool mipmap, bool depthOrStencil);
 void renderSphere();
 void renderCube();
 void renderQuad();
@@ -73,7 +92,14 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-int ToonShading::initialize() {
+int m_useCursor = 0;
+
+GLuint GBuffers[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+
+const char* styles[] = { "Toon", "Gooch", "Hatching" };
+int style = 0;
+
+int StyleShading::initialize() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -90,6 +116,7 @@ int ToonShading::initialize() {
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
+    glfwSetKeyCallback(window, key_callback);
 
     // tell GLFW to capture our mouse
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -101,6 +128,13 @@ int ToonShading::initialize() {
         return -1;
     }
 
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext(nullptr);
+    const ImGuiIO& io = ImGui::GetIO();
+    ImGui::StyleColorsLight();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 330");
+
     // configure global opengl state
 	// -----------------------------
 	glEnable(GL_DEPTH_TEST);
@@ -110,24 +144,95 @@ int ToonShading::initialize() {
 
     toonShader = new Shader("assets/shaders/GLSL/donothing_vert.glsl", "assets/shaders/GLSL/toonshading_frag.glsl");
     goochShader = new Shader("assets/shaders/GLSL/donothing_vert.glsl", "assets/shaders/GLSL/goochshading_frag.glsl");
+    // sobelShader = new Shader("assets/shaders/GLSL/render_quad_vert.glsl", "assets/shaders/GLSL/sobel_outline_frag.glsl");
+    // hatchingShader = new Shader("assets/shaders/GLSL/donothing_vert.glsl", "assets/shaders/GLSL/hatching_frag.glsl");
     lightShader = new Shader("assets/shaders/GLSL/light_vert.glsl", "assets/shaders/GLSL/light_frag.glsl");
 
     teapot = new Model("assets/models/teapot/teapot.obj");
+
+    glGenBuffers(1, &uboMatrices);
+	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	// define the range of the buffer that links to a uniform binding point
+	glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 2 * sizeof(glm::mat4));
+
+    // configure frame buffer objects
+	// ---------------------------------
+    unsigned int imageTextureMSAA, normalTextureMSAA, depthTextureMSAA;
+	std::vector<GLuint*> renderTargetsMSAA; // G buffers
+	glGenTextures(1, &imageTextureMSAA);
+	renderTargetsMSAA.push_back(&imageTextureMSAA);
+	glGenTextures(1, &normalTextureMSAA);
+	renderTargetsMSAA.push_back(&normalTextureMSAA);
+	glGenTextures(1, &depthTextureMSAA);
+	renderTargetsMSAA.push_back(&depthTextureMSAA);
+	configureFBO(window, &goochFBO, &renderTargetsMSAA, true, false, true);
+
+	GLuint intermediateFBO, imageTexture, normalTexture, depthTexture;
+	std::vector<GLuint*> intermediateRenderTargets;
+	glGenTextures(1, &imageTexture);
+	intermediateRenderTargets.push_back(&imageTexture);
+	glGenTextures(1, &normalTexture);
+	intermediateRenderTargets.push_back(&normalTexture);
+	glGenTextures(1, &depthTexture);
+	intermediateRenderTargets.push_back(&depthTexture);
+	configureFBO(window, &intermediateFBO, &intermediateRenderTargets, false, false, false);
+
+	GLuint hatchingFBO, hatching0, hatching1, hatching2, hatching3, hatching4, hatching5;
+	std::vector<GLuint*> hatchingRenderTargets; // G buffers
+	glGenTextures(1, &hatching0);
+	hatchingRenderTargets.push_back(&hatching0);
+	glGenTextures(1, &hatching1);
+	hatchingRenderTargets.push_back(&hatching1);
+	glGenTextures(1, &hatching2);
+	hatchingRenderTargets.push_back(&hatching2);
+	glGenTextures(1, &hatching3);
+	hatchingRenderTargets.push_back(&hatching3);
+	glGenTextures(1, &hatching4);
+	hatchingRenderTargets.push_back(&hatching4);
+	glGenTextures(1, &hatching5);
+	hatchingRenderTargets.push_back(&hatching5);
+	configureFBO(window, &hatchingFBO, &hatchingRenderTargets, false, true, false);
+
+	// assign render targets for goochFBO and intermediateFBO
+	// -----------------------------------
+	glBindFramebuffer(GL_FRAMEBUFFER, goochFBO);
+	glDrawBuffers(3, GBuffers);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, intermediateFBO);
+	glDrawBuffers(3, GBuffers);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
     toonShader->use();
     toonShader->setMat4("projection", projection);
     lightShader->use();
     lightShader->setMat4("projection", projection);
+    goochShader->use();
+    goochShader->setMat4("projection", projection);
+
+    sobelShader->use();
+	sobelShader->setInt("imageTexture", 0);
+	sobelShader->setInt("normalTexture", 1);
+	sobelShader->setInt("depthTexture", 2);
+
+	hatchingShader->use();
+	hatchingShader->setInt("hatching0", 0);
+	hatchingShader->setInt("hatching1", 1);
+	hatchingShader->setInt("hatching2", 2);
+	hatchingShader->setInt("hatching3", 3);
+	hatchingShader->setInt("hatching4", 4);
+	hatchingShader->setInt("hatching5", 5);
 
     return 1;
 }
 
-void ToonShading::finalize() {
+void StyleShading::finalize() {
     glfwTerminate();
 }
 
-void ToonShading::tick() {
+void StyleShading::tick() {
     // per-frame time logic
     // --------------------
     float currentFrame = static_cast<float>(glfwGetTime());
@@ -140,25 +245,87 @@ void ToonShading::tick() {
 
     // render
     // ------
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glm::vec3 newPos = lightPosition + glm::vec3(sin(glfwGetTime()) * 5.0, 0.0, cos(glfwGetTime()) * 5.0);
-    toonShader->use();
-    toonShader->setVec3("lightPos", newPos);
-    toonShader->setVec3("lightColor", lightColor);
-    toonShader->setVec3("objectColor", 1.0f, 0.5f, 0.5f);
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, -3.0f, -5.0f));
-    model = glm::scale(model, glm::vec3(0.05f));
     glm::mat4 view = camera.GetViewMatrix();
-    toonShader->setMat4("model", model);
-    toonShader->setMat4("view", view);
-    toonShader->setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
-    toonShader->setVec3("viewPos", camera.Position);
-    teapot->Draw(*toonShader);
+    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    // store the projection matrix
+    // -----------------------------------
+    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    glm::vec3 newPos = lightPosition + glm::vec3(sin(glfwGetTime()) * 10.0, 0.0, cos(glfwGetTime()) * 10.0);
+
+    if (style == 0) {
+        toonShader->use();
+        toonShader->setVec3("lightPos", newPos);
+        toonShader->setVec3("lightColor", lightColor);
+        toonShader->setVec3("objectColor", 1.0f, 0.5f, 0.5f);
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, -3.0f, -5.0f));
+        model = glm::scale(model, glm::vec3(0.05f));
+        toonShader->setMat4("model", model);
+        toonShader->setMat4("view", view);
+        toonShader->setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
+        toonShader->setVec3("viewPos", camera.Position);
+        teapot->Draw(*toonShader);
+    }
+
+    else if (style == 1) {
+        // Before rendering the first pass
+        // clear the image's render target to white
+        glDrawBuffer(GBuffers[0]);
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // clear the normals' render target to a vector facing away from the camera
+        glDrawBuffer(GBuffers[1]);
+        glm::vec3 clearVec(0.0f, 0.0f, -1.0f);
+        // from normalized vector to rgb color; from [-1,1] to [0,1]
+        clearVec = (clearVec + glm::vec3(1.0f, 1.0f, 1.0f)) * 0.5f;
+        glClearColor(clearVec.x, clearVec.y, clearVec.z, 0.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // clear the depth's render target to black
+        glDrawBuffer(GBuffers[2]);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // now enable all render targets for drawing
+        glDrawBuffers(3, GBuffers);
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+
+        // First pass: Render the model using Gooch shading, and render the camera-space normals and fragment depths to the other render targets
+        goochShader->use();
+        // set uniforms
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, -3.0f, -5.0f));
+        model = glm::scale(model, glm::vec3(0.05f));
+        goochShader->setMat4("model", model);
+        goochShader->setMat4("view", view);
+        goochShader->setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
+        goochShader->setVec3("lightPos", newPos);
+        goochShader->setVec3("viewPos", camera.Position);
+        goochShader->setVec3("coolColor", 0.0f, 0.0f, 0.8f);
+        goochShader->setVec3("warmColor", 0.4f, 0.4f, 0.0f);
+        goochShader->setVec3("objectColor", 1.0f, 1.0f, 1.0f);
+        goochShader->setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+        goochShader->setFloat("specularStrength", 0.5f);
+        goochShader->setFloat("alpha", 0.25f);
+        goochShader->setFloat("beta", 0.5f);
+        if (style == 1) teapot->Draw(*goochShader);
+    }
 
     lightShader->use();
+    glm::mat4 model = glm::mat4(1.0f);
     model = glm::mat4(1.0f);
     model = glm::translate(model, newPos);
     model = glm::scale(model, glm::vec3(0.05f));
@@ -166,6 +333,18 @@ void ToonShading::tick() {
     lightShader->setMat4("view", view);
     lightShader->setVec3("lightColor", lightColor);
     renderCube();
+
+    {
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::Begin("Styles Select");
+        ImGui::Combo("Styles: ", &style, styles, IM_ARRAYSIZE(styles));
+        ImGui::End();
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    }
 
     // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
     // -------------------------------------------------------------------------------
@@ -204,6 +383,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 // -------------------------------------------------------
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
+    if (m_useCursor) return;
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
 
@@ -228,6 +408,22 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS) {
+        m_useCursor = !m_useCursor;
+        if (m_useCursor) {
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
+        else {
+            glfwSetCursorPos(window, lastX, lastY);
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
+    }
 }
 
 // renderCube() renders a 1x1 3D cube in NDC.
@@ -336,6 +532,86 @@ void renderQuad()
     glBindVertexArray(0);
 }
 
-IApplication* g_pApp = static_cast<IApplication*>(new ToonShading);
+// Bind textures and buffers to frame buffer object
+// ----------------------------------------------------------------------
+void configureFBO(GLFWwindow* window, GLuint* FBO, std::vector<GLuint*>* textures, bool multisample, bool mipmap, bool depthOrStencil) {
+
+	glGenFramebuffers(1, FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, *FBO);
+
+	// get default textures
+	int width, height, nrChannels;
+
+	// generate texture buffers
+	for (int i = 0; i < (*textures).size(); i++)
+	{
+		if (multisample)
+		{
+			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, *(*textures)[i]);
+			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, SCR_WIDTH, SCR_HEIGHT, GL_TRUE);
+
+			glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D_MULTISAMPLE, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D_MULTISAMPLE, *(*textures)[i], 0);
+
+			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+		}
+		else
+		{
+			glBindTexture(GL_TEXTURE_2D, *(*textures)[i]);
+
+			if (mipmap) // create mipmaps for hatching textures
+			{
+				std::string filename = std::string("Textures/Hatch/hatch_") + std::to_string(i) + std::string(".jpg");
+				unsigned char* tex = stbi_load(filename.c_str(), &width, &height, &nrChannels, 0);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, tex);
+				glGenerateMipmap(GL_TEXTURE_2D);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // trilinear filtering
+				stbi_image_free(tex);
+			}
+			else
+			{
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, SCR_WIDTH, SCR_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+			}
+			
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, *(*textures)[i], 0);
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
+	}
+
+	if (depthOrStencil)
+	{
+		// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
+		GLuint rbo;
+		glGenRenderbuffers(1, &rbo);
+		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+
+		// use a single renderbuffer object for both a depth AND stencil buffer
+		if (multisample)
+		{
+			glRenderbufferStorageMultisample(GL_RENDERBUFFER, 4, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+		}
+		else
+		{
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT);
+		}
+		
+		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
+	}
+	
+	// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
+		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+IApplication* g_pApp = static_cast<IApplication*>(new StyleShading);
 
 } // namespace cg
