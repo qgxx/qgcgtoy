@@ -44,6 +44,10 @@ and drag the left mouse button to rotate the camera.
 ![Toon](./assets/results/toon-style.gif)  
 #### Gooch
 ![Gooch](./assets/results/gooch-style.gif)  
+#### Sobel
+![Sobel](./assets/results/sobel.gif)  
+#### Hatching
+![Hatching](./assets/results/hatching.gif)  
 
 # External Dependencies
 Assimp  
