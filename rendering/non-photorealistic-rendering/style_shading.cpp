@@ -7,8 +7,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <imgui/imgui_impl_glfw.h>
-#include <imgui/imgui_impl_opengl3.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
 
 #include <stdio.h>
 #include <iostream>
@@ -60,10 +60,6 @@ private:
     glm::vec3 lightPosition = glm::vec3(0.0f);
     glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
 
-    unsigned int uboMatrices;
-    unsigned int goochFBO;
-    unsigned int intermediateFBO;
-
 };
 
 
@@ -94,16 +90,24 @@ float lastFrame = 0.0f;
 
 int m_useCursor = 0;
 
+GLuint goochFBO, imageTextureMSAA, normalTextureMSAA, depthTextureMSAA;
+std::vector<GLuint*> renderTargetsMSAA;
+
+GLuint intermediateFBO, imageTexture, normalTexture, depthTexture;
+std::vector<GLuint*> intermediateRenderTargets;
+
+GLuint hatchingFBO, hatching0, hatching1, hatching2, hatching3, hatching4, hatching5;
+std::vector<GLuint*> hatchingRenderTargets; // G buffers
+
 GLuint GBuffers[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
 
-const char* styles[] = { "Toon", "Gooch", "Hatching" };
+const char* styles[] = { "Toon", "Gooch", "Gooch + Sobel", "Hatching" };
 int style = 0;
 
 int StyleShading::initialize() {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_SAMPLES, 4);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, SCR_TITLE, NULL, NULL);
@@ -142,25 +146,16 @@ int StyleShading::initialize() {
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    toonShader = new Shader("assets/shaders/GLSL/donothing_vert.glsl", "assets/shaders/GLSL/toonshading_frag.glsl");
-    goochShader = new Shader("assets/shaders/GLSL/donothing_vert.glsl", "assets/shaders/GLSL/goochshading_frag.glsl");
-    // sobelShader = new Shader("assets/shaders/GLSL/render_quad_vert.glsl", "assets/shaders/GLSL/sobel_outline_frag.glsl");
-    // hatchingShader = new Shader("assets/shaders/GLSL/donothing_vert.glsl", "assets/shaders/GLSL/hatching_frag.glsl");
+    toonShader = new Shader("assets/shaders/GLSL/default_vert.glsl", "assets/shaders/GLSL/toonshading_frag.glsl");
+    goochShader = new Shader("assets/shaders/GLSL/default_vert.glsl", "assets/shaders/GLSL/goochshading_frag.glsl");
+    sobelShader = new Shader("assets/shaders/GLSL/render_quad_vert.glsl", "assets/shaders/GLSL/sobel_outline_frag.glsl");
+    hatchingShader = new Shader("assets/shaders/GLSL/default_vert.glsl", "assets/shaders/GLSL/hatching_frag.glsl");
     lightShader = new Shader("assets/shaders/GLSL/light_vert.glsl", "assets/shaders/GLSL/light_frag.glsl");
 
     teapot = new Model("assets/models/teapot/teapot.obj");
 
-    glGenBuffers(1, &uboMatrices);
-	glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-	glBufferData(GL_UNIFORM_BUFFER, 2 * sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-	// define the range of the buffer that links to a uniform binding point
-	glBindBufferRange(GL_UNIFORM_BUFFER, 0, uboMatrices, 0, 2 * sizeof(glm::mat4));
-
-    // configure frame buffer objects
+	// configure frame buffer objects
 	// ---------------------------------
-    unsigned int imageTextureMSAA, normalTextureMSAA, depthTextureMSAA;
-	std::vector<GLuint*> renderTargetsMSAA; // G buffers
 	glGenTextures(1, &imageTextureMSAA);
 	renderTargetsMSAA.push_back(&imageTextureMSAA);
 	glGenTextures(1, &normalTextureMSAA);
@@ -169,8 +164,6 @@ int StyleShading::initialize() {
 	renderTargetsMSAA.push_back(&depthTextureMSAA);
 	configureFBO(window, &goochFBO, &renderTargetsMSAA, true, false, true);
 
-	GLuint intermediateFBO, imageTexture, normalTexture, depthTexture;
-	std::vector<GLuint*> intermediateRenderTargets;
 	glGenTextures(1, &imageTexture);
 	intermediateRenderTargets.push_back(&imageTexture);
 	glGenTextures(1, &normalTexture);
@@ -179,8 +172,6 @@ int StyleShading::initialize() {
 	intermediateRenderTargets.push_back(&depthTexture);
 	configureFBO(window, &intermediateFBO, &intermediateRenderTargets, false, false, false);
 
-	GLuint hatchingFBO, hatching0, hatching1, hatching2, hatching3, hatching4, hatching5;
-	std::vector<GLuint*> hatchingRenderTargets; // G buffers
 	glGenTextures(1, &hatching0);
 	hatchingRenderTargets.push_back(&hatching0);
 	glGenTextures(1, &hatching1);
@@ -204,15 +195,9 @@ int StyleShading::initialize() {
 	glDrawBuffers(3, GBuffers);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-    toonShader->use();
-    toonShader->setMat4("projection", projection);
-    lightShader->use();
-    lightShader->setMat4("projection", projection);
-    goochShader->use();
-    goochShader->setMat4("projection", projection);
-
-    sobelShader->use();
+	// shader configuration
+	// ---------------------------------
+	sobelShader->use();
 	sobelShader->setInt("imageTexture", 0);
 	sobelShader->setInt("normalTexture", 1);
 	sobelShader->setInt("depthTexture", 2);
@@ -245,26 +230,17 @@ void StyleShading::tick() {
 
     // render
     // ------
-    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);	// Set background color to black and opaque
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glm::mat4 view = camera.GetViewMatrix();
-    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-	glBufferSubData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), sizeof(glm::mat4), glm::value_ptr(view));
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    // store the projection matrix
-    // -----------------------------------
     glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-    glBindBuffer(GL_UNIFORM_BUFFER, uboMatrices);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(projection));
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    glm::vec3 newPos = lightPosition + glm::vec3(sin(glfwGetTime()) * 10.0, 0.0, cos(glfwGetTime()) * 10.0);
+    glm::vec3 new_lightPos = lightPosition + glm::vec3(sin(glfwGetTime()) * 10.0, 0.0, cos(glfwGetTime()) * 10.0);
 
     if (style == 0) {
         toonShader->use();
-        toonShader->setVec3("lightPos", newPos);
+        toonShader->setVec3("lightPos", new_lightPos);
         toonShader->setVec3("lightColor", lightColor);
         toonShader->setVec3("objectColor", 1.0f, 0.5f, 0.5f);
         glm::mat4 model = glm::mat4(1.0f);
@@ -272,12 +248,39 @@ void StyleShading::tick() {
         model = glm::scale(model, glm::vec3(0.05f));
         toonShader->setMat4("model", model);
         toonShader->setMat4("view", view);
+        toonShader->setMat4("projection", projection);
         toonShader->setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
         toonShader->setVec3("viewPos", camera.Position);
-        teapot->Draw(*toonShader);
+        teapot->Draw();
     }
-
     else if (style == 1) {
+        // First pass: Render the model using Gooch shading, and render the camera-space normals and fragment depths to the other render targets
+        goochShader->use();
+        // set uniforms
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, -3.0f, -5.0f));
+        model = glm::scale(model, glm::vec3(0.05f));
+        goochShader->setMat4("model", model);
+        goochShader->setMat4("view", view);
+        goochShader->setMat4("projection", projection);
+        goochShader->setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
+        goochShader->setVec3("lightPos", new_lightPos);
+        goochShader->setVec3("viewPos", camera.Position);
+        goochShader->setVec3("coolColor", 0.0f, 0.0f, 0.8f);
+        goochShader->setVec3("warmColor", 0.4f, 0.4f, 0.0f);
+        goochShader->setVec3("objectColor", 1.0f, 1.0f, 1.0f);
+        goochShader->setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+        goochShader->setFloat("specularStrength", 0.5f);
+        goochShader->setFloat("alpha", 0.25f);
+        goochShader->setFloat("beta", 0.5f);
+
+        // render model
+        teapot->Draw();
+    }
+    else if (style == 2) {
+        glBindFramebuffer(GL_FRAMEBUFFER, goochFBO);
+        glEnable(GL_DEPTH_TEST); // enable depth testing (is disabled for rendering screen-space quad)
+
         // Before rendering the first pass
         // clear the image's render target to white
         glDrawBuffer(GBuffers[0]);
@@ -306,13 +309,13 @@ void StyleShading::tick() {
         goochShader->use();
         // set uniforms
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, -3.0f, -5.0f));
         model = glm::scale(model, glm::vec3(0.05f));
         goochShader->setMat4("model", model);
         goochShader->setMat4("view", view);
+        goochShader->setMat4("projection", projection);
         goochShader->setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
-        goochShader->setVec3("lightPos", newPos);
+        goochShader->setVec3("lightPos", new_lightPos);
         goochShader->setVec3("viewPos", camera.Position);
         goochShader->setVec3("coolColor", 0.0f, 0.0f, 0.8f);
         goochShader->setVec3("warmColor", 0.4f, 0.4f, 0.0f);
@@ -321,16 +324,98 @@ void StyleShading::tick() {
         goochShader->setFloat("specularStrength", 0.5f);
         goochShader->setFloat("alpha", 0.25f);
         goochShader->setFloat("beta", 0.5f);
-        if (style == 1) teapot->Draw(*goochShader);
+
+        // render model
+        teapot->Draw();
+
+        // now blit multisampled buffer(s) to G intermediateFBO's G buffers
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, goochFBO);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, intermediateFBO);
+
+        // must copy each color attachment one at a time
+        // blitting a multisampled source texture into a singlesampled destination takes care of MSAA resolve
+        // the resulting texture is anti-aliased
+        glReadBuffer(GBuffers[0]); // image
+        glDrawBuffer(GBuffers[0]);
+        glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glReadBuffer(GBuffers[1]); // normal
+        glDrawBuffer(GBuffers[1]);
+        glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glReadBuffer(GBuffers[2]); // depth
+        glDrawBuffer(GBuffers[2]);
+        glBlitFramebuffer(0, 0, SCR_WIDTH, SCR_HEIGHT, 0, 0, SCR_WIDTH, SCR_HEIGHT, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+            
+        // Second pass: Do a full-screen edge detection filter over the normals from the first pass and draw feature edges
+        // bind back to default framebuffer and draw a quad plane with the attached framebuffer color textures
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        //glDisable(GL_DEPTH_TEST); // disable depth test so screen-space quad isn't discarded due to depth test.
+        // clear all relevant buffers
+        // set background to white to be able to see rendered outline
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        sobelShader->use();
+
+        // activate textures
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, *intermediateRenderTargets[0]); // image
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, *intermediateRenderTargets[1]); // normal
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, *intermediateRenderTargets[2]); // depth
+    
+        // set uniforms
+        sobelShader->setVec4("_OutlineColor", 0.0f, 0.0f, 0.0f, 1.0f);
+        sobelShader->setFloat("depthThreshold", 0.04f);
+        sobelShader->setFloat("normalThreshold", 0.085f);
+        /*sobelShader.setFloat("depthThreshold", 0.075f);
+        sobelShader.setFloat("normalThreshold", 0.075f);*/
+
+        // finally render quad
+        renderQuad();
+    }
+    else if (style == 3) {
+        hatchingShader->use();
+
+        // activate textures
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, *hatchingRenderTargets[0]); // light
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, *hatchingRenderTargets[1]);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, *hatchingRenderTargets[2]);
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, *hatchingRenderTargets[3]);
+        glActiveTexture(GL_TEXTURE4);
+        glBindTexture(GL_TEXTURE_2D, *hatchingRenderTargets[4]);
+        glActiveTexture(GL_TEXTURE5);
+        glBindTexture(GL_TEXTURE_2D, *hatchingRenderTargets[5]); // dark
+
+        // set uniforms
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(0.0f, -3.0f, -5.0f));
+        model = glm::scale(model, glm::vec3(0.05f));
+        hatchingShader->setMat4("model", model);
+        hatchingShader->setMat4("view", view);
+        hatchingShader->setMat4("projection", projection);
+        hatchingShader->setMat3("normalMatrix", glm::transpose(glm::inverse(glm::mat3(model))));
+        hatchingShader->setVec3("lightPos", new_lightPos);
+        hatchingShader->setVec3("viewPos", camera.Position);
+        hatchingShader->setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+
+        // render model
+        teapot->Draw();
     }
 
     lightShader->use();
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::mat4(1.0f);
-    model = glm::translate(model, newPos);
+    model = glm::translate(model, new_lightPos);
     model = glm::scale(model, glm::vec3(0.05f));
     lightShader->setMat4("model", model);
     lightShader->setMat4("view", view);
+    lightShader->setMat4("projection", projection);
     lightShader->setVec3("lightColor", lightColor);
     renderCube();
 
@@ -562,7 +647,7 @@ void configureFBO(GLFWwindow* window, GLuint* FBO, std::vector<GLuint*>* texture
 
 			if (mipmap) // create mipmaps for hatching textures
 			{
-				std::string filename = std::string("Textures/Hatch/hatch_") + std::to_string(i) + std::string(".jpg");
+				std::string filename = std::string("assets/textures/hatch/hatch_") + std::to_string(i) + std::string(".jpg");
 				unsigned char* tex = stbi_load(filename.c_str(), &width, &height, &nrChannels, 0);
 				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, tex);
 				glGenerateMipmap(GL_TEXTURE_2D);

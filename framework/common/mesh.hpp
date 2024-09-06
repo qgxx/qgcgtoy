@@ -82,6 +82,14 @@ public:
         glActiveTexture(GL_TEXTURE0);
     }
 
+    void Draw() {
+        glBindVertexArray(VAO);
+        glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+
+        glActiveTexture(GL_TEXTURE0);
+    }
+
 private:
     vertices_type vertices;
     indices_type  indices;

@@ -37,6 +37,10 @@ public:
     void Draw(const Shader& shader) {
         for (unsigned int i = 0; i < meshes.size(); i++) meshes[i].Draw(shader);
     }
+
+    void Draw() {
+        for (unsigned int i = 0; i < meshes.size(); i++) meshes[i].Draw();
+    }
     
 private:
     void loadModel(const std::string& path) {
