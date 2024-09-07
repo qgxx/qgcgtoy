@@ -1,0 +1,1 @@
+add_library(glfw_app glfw_app.cpp)

@@ -10,8 +10,7 @@
 #include "shader.hpp"
 #include "camera.hpp"
 #include "model.hpp"
-#include "load\load_texture.hpp"
-#include "sphere.hpp"
+#include "load/load_texture.hpp"
 
 #include <iostream>
 
@@ -63,8 +62,6 @@ private:
     float spacing = 2.5;
 
     Shader* lightShader[LIGHT_COUNT];
-
-    Sphere sphere;
 
 };
 
