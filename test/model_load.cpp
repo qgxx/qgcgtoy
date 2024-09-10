@@ -81,6 +81,7 @@ int main()
     // load models
     // -----------
     Model ourModel("assets/models/Elysia_maid/Elysia.pmx");
+    Model Marry("assets/models/mary/Marry.obj");
 
     
     // draw in wireframe
@@ -120,6 +121,11 @@ int main()
         model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));	// it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", model);
         ourModel.Draw(ourShader);
+
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(5.0f, 0.0f, 0.0f));
+        ourShader.setMat4("model", model);
+        Marry.Draw(ourShader);
 
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)

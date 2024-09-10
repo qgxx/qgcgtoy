@@ -1,8 +1,8 @@
-add_executable(PMX load_pmx.cpp 
+add_executable(model_load model_load.cpp 
 ${PROJECT_SOURCE_DIR}/external/src/glad/src/glad.c)
 
-target_link_libraries(PMX ${assimp-vc143-mt_LIBRARY} 
+target_link_libraries(model_load ${assimp-vc143-mt_LIBRARY} 
 ${glfw3_LIBRARY} 
 ${glm_LIBRARY} )
 
-add_test(NAME TEST_PMX COMMAND PMX)
+add_test(NAME TEST_model_load COMMAND model_load)

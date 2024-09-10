@@ -85,7 +85,7 @@ float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
 
 // light
-DirectLight light(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(-3.0f, -3.0f, -3.0f));
+DirectLight light(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(-3.0f, 0.0f, -3.0f));
 
 // timing
 float deltaTime = 0.0f;
