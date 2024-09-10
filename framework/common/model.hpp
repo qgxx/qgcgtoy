@@ -114,6 +114,17 @@ private:
 				vector.z = mesh->mNormals[i].z;
 				vertex.Normal = vector;
 			}
+			if (mesh->HasTangentsAndBitangents()) {
+				vector.x = mesh->mTangents[i].x;
+				vector.y = mesh->mTangents[i].y;
+				vector.z = mesh->mTangents[i].z;
+				vertex.Tangent = vector;
+
+				vector.x = mesh->mBitangents[i].x;
+				vector.y = mesh->mBitangents[i].y;
+				vector.z = mesh->mBitangents[i].z;
+				vertex.Bitangent = vector;
+			} 
 			// texture coordinates
 			if (mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
 			{

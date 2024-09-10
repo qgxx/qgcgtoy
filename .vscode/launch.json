@@ -90,6 +90,19 @@
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": false
+        },
+        {
+            "name": "Screen Space Reflections",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Release/ssr.exe",
+            "args": [
+                ""
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false
         }
     ]
 }
