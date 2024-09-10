@@ -11,6 +11,7 @@
 #include "shader.hpp"
 #include "model.hpp"
 #include "camera.hpp"
+#include "light.hpp"
 #include "geo_render.hpp"
 #include "umath.hpp"
 #include "application.h"
@@ -63,8 +64,6 @@ private:
 
     const int SAMPLE_NUMBER = 64;
 
-    glm::vec3 lightPos = glm::vec3(5.0f, 5.0f, 5.0f);
-
 };
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -75,15 +74,18 @@ int hizPass(Shader* shader, unsigned int depthTexture, unsigned int p, unsigned 
 void renderQuad();
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1024;
+const unsigned int SCR_HEIGHT = 1024;
 const char* SCR_TITLE = "Reflective Shadow Maps";
 
 // camera
-Camera camera(glm::vec3(0.0f, -1.0f, 0.0f));
+Camera camera(glm::vec3(5.0f, 5.0f, 3.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
+
+// light
+DirectLight light(glm::vec3(3.0f, 3.0f, 3.0f), glm::vec3(-3.0f, -3.0f, -3.0f));
 
 // timing
 float deltaTime = 0.0f;
@@ -195,7 +197,7 @@ int RSM::initialize() {
     glBindBufferRange(GL_UNIFORM_BUFFER, 0, ubo, 0, 4 * sizeof(GL_FLOAT) * sampleCoordsandWeights.size());
 
     sceneFlux->use();
-    sceneFlux->setVec3("lightPos", lightPos);
+    sceneFlux->setVec3("lightPos", light.mPos);
     sceneFlux->setVec3("viewPos", camera.Position);
 
     rsm->use();
@@ -237,7 +239,7 @@ void RSM::tick() {
     glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glm::mat4 lightView = glm::lookAt(lightPos, glm::vec3(-0.5f, -0.5f, -0.5f), glm::vec3(0.0f, 1.0f, 0.0f));    
+    glm::mat4 lightView = light.GetViewMatrix();   
     glm::mat4 lightProjection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, 1e-2f, 20.0f);
     glm::mat4 lightSpace = lightProjection * lightView;
     glm::mat4 model = glm::mat4(1.0f);
@@ -245,7 +247,7 @@ void RSM::tick() {
     sceneFlux->use();
     sceneFlux->setMat4("model", model);
     sceneFlux->setMat4("lightSpace", lightSpace);
-    sceneFlux->setVec3("lightPos", lightPos);
+    sceneFlux->setVec3("lightPos", light.mPos);
     sceneFlux->setVec3("viewPos", camera.Position);
     box->Draw(*sceneFlux);
     model = glm::mat4(1.0f);
@@ -283,11 +285,10 @@ void RSM::tick() {
     rsm->setMat4("view", view);
     rsm->setMat4("projection", projection);
     rsm->setMat4("lightSpace", lightSpace);
-    rsm->setVec3("lightPos", lightPos);
+    rsm->setVec3("lightPos", light.mPos);
     rsm->setVec3("viewPos", camera.Position);
     model = glm::mat4(1.0f);
     model = glm::scale(model,glm::vec3(3.0, 3.0, 3.0));
-    model = glm::rotate(model, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
     rsm->setMat4("model", model);
     box->Draw(*rsm);
     model = glm::mat4(1.0f);
@@ -298,7 +299,7 @@ void RSM::tick() {
     lighting->setMat4("projection", projection);
     lighting->setMat4("view", view);
     model = glm::mat4(1.0f);
-    model = glm::translate(model, lightPos);
+    model = glm::translate(model, light.mPos);
     model = glm::scale(model, glm::vec3(0.1f));
     lighting->setMat4("model", model);
     lighting->setVec3("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
@@ -312,30 +313,19 @@ void RSM::tick() {
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow* window)
+void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        camera.ProcessKeyboard(FORWARD, deltaTime);     
-    }
-       
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        camera.ProcessKeyboard(BACKWARD, deltaTime);      
-    }
-        
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    }
-    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-    }
-        
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -353,7 +343,6 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
-
     if (firstMouse)
     {
         lastX = xpos;
