@@ -240,7 +240,7 @@ void RSM::tick() {
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glm::mat4 lightView = light.GetViewMatrix();   
-    glm::mat4 lightProjection = glm::ortho(-20.0f, 20.0f, -20.0f, 20.0f, 1e-2f, 20.0f);
+    glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1e-2f, 20.0f);
     glm::mat4 lightSpace = lightProjection * lightView;
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::scale(model,glm::vec3(3.0, 3.0, 3.0));
