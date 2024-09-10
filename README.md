@@ -56,6 +56,10 @@ and drag the left mouse button to rotate the camera.
 #### Hatching
 ![Hatching](./assets/results/hatching.gif)  
 
+## Ray Tracing
+### Path Tracing
+![Path-Tracing](./assets/results/path_tracing.png)  
+
 # External Dependencies
 Assimp  
 glfw  
@@ -77,3 +81,4 @@ Please refer to the `task.json` file for detailed configuration.
 [WC Yang's Real-Time High Quality Rendering](https://yangwc.com/)   
 [KillerAery's Real-time Global Illumination](https://www.cnblogs.com/KillerAery/collections/3076)  
 [LearnOpenGL](https://learnopengl.com/)  
+[AKG4e3's Ray Tracing Tutorial](https://github.com/AKGWSB/EzRT?tab=readme-ov-file#part-3-opengl-ray-tracing)  
