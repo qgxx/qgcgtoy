@@ -51,7 +51,7 @@ and drag the left mouse button to rotate the camera.
 ![Toon](./assets/results/toon-style.gif)  
 #### Gooch
 ![Gooch](./assets/results/gooch-style.gif)  
-#### Sobel
+#### Gooch + Sobel
 ![Sobel](./assets/results/sobel.gif)  
 #### Hatching
 ![Hatching](./assets/results/hatching.gif)  
@@ -61,6 +61,8 @@ and drag the left mouse button to rotate the camera.
 ![Path-Tracing](./assets/results/path_tracing.png)  
 #### KVH 
 ![BVH](./assets/results/BVH.png)  
+#### GPU
+![PathTracing GPU](./assets/results/PathTracingGPU.png)  
 
 # External Dependencies
 Assimp  

@@ -25,6 +25,8 @@ using namespace glm;
 struct Material {
     vec3 emissive = vec3(0, 0, 0);  // light source color
     vec3 baseColor = vec3(1, 1, 1);
+
+    // disney principles
     float subsurface = 0.0;
     float metallic = 0.0;
     float specular = 0.0;
@@ -133,7 +135,7 @@ void addModel(cg::Model& model, std::vector<Triangle>& triangles, Material mater
         }
     }
 
-    // 模型大小归一化
+    // model size normalization
     float lenx = maxx - minx;
     float leny = maxy - miny;
     float lenz = maxz - minz;
@@ -144,14 +146,13 @@ void addModel(cg::Model& model, std::vector<Triangle>& triangles, Material mater
         v.z /= maxaxis;
     }
 
-    // 通过矩阵进行坐标变换
     for (auto& v : vertices) {
         vec4 vv = vec4(v.x, v.y, v.z, 1);
         vv = trans * vv;
         v = vec3(vv.x, vv.y, vv.z);
     }
 
-    // 生成法线
+    // generate normal
     std::vector<vec3> normals(vertices.size(), vec3(0, 0, 0));
     for (int i = 0; i < indices.size(); i += 3) {
         vec3 p1 = vertices[indices[i]];
@@ -163,12 +164,11 @@ void addModel(cg::Model& model, std::vector<Triangle>& triangles, Material mater
         normals[indices[i + 2]] += n;
     }
 
-    // 构建 Triangle 对象数组
-    int offset = triangles.size();  // 增量更新
+
+    int offset = triangles.size();
     triangles.resize(offset + indices.size() / 3);
     for (int i = 0; i < indices.size(); i += 3) {
         Triangle& t = triangles[offset + i / 3];
-        // 传顶点属性
         t.p1 = vertices[indices[i]];
         t.p2 = vertices[indices[i + 1]];
         t.p3 = vertices[indices[i + 2]];
@@ -182,35 +182,29 @@ void addModel(cg::Model& model, std::vector<Triangle>& triangles, Material mater
             t.n3 = normalize(normals[indices[i + 2]]);
         }
 
-        // 传材质
         t.material = material;
     }
 }
 
-// 构建 BVH
+
+// use index instead if point 
 int buildBVH(std::vector<Triangle>& triangles, std::vector<BVHNode>& nodes, int l, int r, int n) {
     if (l > r) return 0;
 
-    // 注：
-    // 此处不可通过指针，引用等方式操作，必须用 nodes[id] 来操作
-    // 因为 std::vector<> 扩容时会拷贝到更大的内存，那么地址就改变了
-    // 而指针，引用均指向原来的内存，所以会发生错误
     nodes.push_back(BVHNode());
-    int id = nodes.size() - 1;   // 注意： 先保存索引
+    int id = nodes.size() - 1; 
     nodes[id].left = nodes[id].right = nodes[id].n = nodes[id].index = 0;
-    nodes[id].AA = vec3(1145141919, 1145141919, 1145141919);
-    nodes[id].BB = vec3(-1145141919, -1145141919, -1145141919);
+    nodes[id].AA = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+    nodes[id].BB = vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 
-    // 计算 AABB
+
     for (int i = l; i <= r; i++) {
-        // 最小点 AA
         float minx = min(triangles[i].p1.x, min(triangles[i].p2.x, triangles[i].p3.x));
         float miny = min(triangles[i].p1.y, min(triangles[i].p2.y, triangles[i].p3.y));
         float minz = min(triangles[i].p1.z, min(triangles[i].p2.z, triangles[i].p3.z));
         nodes[id].AA.x = min(nodes[id].AA.x, minx);
         nodes[id].AA.y = min(nodes[id].AA.y, miny);
         nodes[id].AA.z = min(nodes[id].AA.z, minz);
-        // 最大点 BB
         float maxx = max(triangles[i].p1.x, max(triangles[i].p2.x, triangles[i].p3.x));
         float maxy = max(triangles[i].p1.y, max(triangles[i].p2.y, triangles[i].p3.y));
         float maxz = max(triangles[i].p1.z, max(triangles[i].p2.z, triangles[i].p3.z));
@@ -219,27 +213,22 @@ int buildBVH(std::vector<Triangle>& triangles, std::vector<BVHNode>& nodes, int 
         nodes[id].BB.z = max(nodes[id].BB.z, maxz);
     }
 
-    // 不多于 n 个三角形 返回叶子节点
     if ((r - l + 1) <= n) {
         nodes[id].n = r - l + 1;
         nodes[id].index = l;
         return id;
     }
 
-    // 否则递归建树
     float lenx = nodes[id].BB.x - nodes[id].AA.x;
     float leny = nodes[id].BB.y - nodes[id].AA.y;
     float lenz = nodes[id].BB.z - nodes[id].AA.z;
-    // 按 x 划分
     if (lenx >= leny && lenx >= lenz)
         std::sort(triangles.begin() + l, triangles.begin() + r + 1, cmpx);
-    // 按 y 划分
     if (leny >= lenx && leny >= lenz)
         std::sort(triangles.begin() + l, triangles.begin() + r + 1, cmpy);
-    // 按 z 划分
     if (lenz >= lenx && lenz >= leny)
         std::sort(triangles.begin() + l, triangles.begin() + r + 1, cmpz);
-    // 递归
+
     int mid = (l + r) / 2;
     int left = buildBVH(triangles, nodes, l, mid, n);
     int right = buildBVH(triangles, nodes, mid + 1, r, n);
@@ -250,26 +239,23 @@ int buildBVH(std::vector<Triangle>& triangles, std::vector<BVHNode>& nodes, int 
     return id;
 }
 
-// SAH 优化构建 BVH
+
 int buildBVHwithSAH(std::vector<Triangle>& triangles, std::vector<BVHNode>& nodes, int l, int r, int n) {
     if (l > r) return 0;
 
     nodes.push_back(BVHNode());
     int id = nodes.size() - 1;   
     nodes[id].left = nodes[id].right = nodes[id].n = nodes[id].index = 0;
-    nodes[id].AA = vec3(1145141919, 1145141919, 1145141919);
-    nodes[id].BB = vec3(-1145141919, -1145141919, -1145141919);
+    nodes[id].AA = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
+    nodes[id].BB = vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 
-    // 计算 AABB
     for (int i = l; i <= r; i++) {
-        // 最小点 AA
         float minx = min(triangles[i].p1.x, min(triangles[i].p2.x, triangles[i].p3.x));
         float miny = min(triangles[i].p1.y, min(triangles[i].p2.y, triangles[i].p3.y));
         float minz = min(triangles[i].p1.z, min(triangles[i].p2.z, triangles[i].p3.z));
         nodes[id].AA.x = min(nodes[id].AA.x, minx);
         nodes[id].AA.y = min(nodes[id].AA.y, miny);
         nodes[id].AA.z = min(nodes[id].AA.z, minz);
-        // 最大点 BB
         float maxx = max(triangles[i].p1.x, max(triangles[i].p2.x, triangles[i].p3.x));
         float maxy = max(triangles[i].p1.y, max(triangles[i].p2.y, triangles[i].p3.y));
         float maxz = max(triangles[i].p1.z, max(triangles[i].p2.z, triangles[i].p3.z));
@@ -278,31 +264,25 @@ int buildBVHwithSAH(std::vector<Triangle>& triangles, std::vector<BVHNode>& node
         nodes[id].BB.z = max(nodes[id].BB.z, maxz);
     }
 
-    // 不多于 n 个三角形 返回叶子节点
     if ((r - l + 1) <= n) {
         nodes[id].n = r - l + 1;
         nodes[id].index = l;
         return id;
     }
 
-    // 否则递归建树
     float Cost = FLT_MAX;
     int Axis = 0;
     int Split = (l + r) / 2;
     for (int axis = 0; axis < 3; axis++) {
-        // 分别按 x，y，z 轴排序
         if (axis == 0) std::sort(&triangles[0] + l, &triangles[0] + r + 1, cmpx);
         if (axis == 1) std::sort(&triangles[0] + l, &triangles[0] + r + 1, cmpy);
         if (axis == 2) std::sort(&triangles[0] + l, &triangles[0] + r + 1, cmpz);
 
-        // leftMax[i]: [l, i] 中最大的 xyz 值
-        // leftMin[i]: [l, i] 中最小的 xyz 值
         std::vector<vec3> leftMax(r - l + 1, vec3(FLT_MIN, FLT_MIN, FLT_MIN));
         std::vector<vec3> leftMin(r - l + 1, vec3(FLT_MAX, FLT_MAX, FLT_MAX));
-        // 计算前缀 注意 i-l 以对齐到下标 0
         for (int i = l; i <= r; i++) {
             Triangle& t = triangles[i];
-            int bias = (i == l) ? 0 : 1;  // 第一个元素特殊处理
+            int bias = (i == l) ? 0 : 1;
 
             leftMax[i - l].x = max(leftMax[i - l - bias].x, max(t.p1.x, max(t.p2.x, t.p3.x)));
             leftMax[i - l].y = max(leftMax[i - l - bias].y, max(t.p1.y, max(t.p2.y, t.p3.y)));
@@ -313,14 +293,11 @@ int buildBVHwithSAH(std::vector<Triangle>& triangles, std::vector<BVHNode>& node
             leftMin[i - l].z = min(leftMin[i - l - bias].z, min(t.p1.z, min(t.p2.z, t.p3.z)));
         }
 
-        // rightMax[i]: [i, r] 中最大的 xyz 值
-        // rightMin[i]: [i, r] 中最小的 xyz 值
         std::vector<vec3> rightMax(r - l + 1, vec3(FLT_MIN, FLT_MIN, FLT_MIN));
         std::vector<vec3> rightMin(r - l + 1, vec3(FLT_MAX, FLT_MAX, FLT_MAX));
-        // 计算后缀 注意 i-l 以对齐到下标 0
         for (int i = r; i >= l; i--) {
             Triangle& t = triangles[i];
-            int bias = (i == r) ? 0 : 1;  // 第一个元素特殊处理
+            int bias = (i == r) ? 0 : 1;
 
             rightMax[i - l].x = max(rightMax[i - l + bias].x, max(t.p1.x, max(t.p2.x, t.p3.x)));
             rightMax[i - l].y = max(rightMax[i - l + bias].y, max(t.p1.y, max(t.p2.y, t.p3.y)));
@@ -331,12 +308,10 @@ int buildBVHwithSAH(std::vector<Triangle>& triangles, std::vector<BVHNode>& node
             rightMin[i - l].z = min(rightMin[i - l + bias].z, min(t.p1.z, min(t.p2.z, t.p3.z)));
         }
 
-        // 遍历寻找分割
         float cost = FLT_MAX;
         int split = l;
         for (int i = l; i <= r - 1; i++) {
             float lenx, leny, lenz;
-            // 左侧 [l, i]
             vec3 leftAA = leftMin[i - l];
             vec3 leftBB = leftMax[i - l];
             lenx = leftBB.x - leftAA.x;
@@ -345,7 +320,6 @@ int buildBVHwithSAH(std::vector<Triangle>& triangles, std::vector<BVHNode>& node
             float leftS = 2.0 * ((lenx * leny) + (lenx * lenz) + (leny * lenz));
             float leftCost = leftS * (i - l + 1);
 
-            // 右侧 [i+1, r]
             vec3 rightAA = rightMin[i + 1 - l];
             vec3 rightBB = rightMax[i + 1 - l];
             lenx = rightBB.x - rightAA.x;
@@ -354,14 +328,13 @@ int buildBVHwithSAH(std::vector<Triangle>& triangles, std::vector<BVHNode>& node
             float rightS = 2.0 * ((lenx * leny) + (lenx * lenz) + (leny * lenz));
             float rightCost = rightS * (r - i);
 
-            // 记录每个分割的最小答案
             float totalCost = leftCost + rightCost;
             if (totalCost < cost) {
                 cost = totalCost;
                 split = i;
             }
         }
-        // 记录每个轴的最佳答案
+
         if (cost < Cost) {
             Cost = cost;
             Axis = axis;
@@ -369,12 +342,10 @@ int buildBVHwithSAH(std::vector<Triangle>& triangles, std::vector<BVHNode>& node
         }
     }
 
-    // 按最佳轴分割
     if (Axis == 0) std::sort(&triangles[0] + l, &triangles[0] + r + 1, cmpx);
     if (Axis == 1) std::sort(&triangles[0] + l, &triangles[0] + r + 1, cmpy);
     if (Axis == 2) std::sort(&triangles[0] + l, &triangles[0] + r + 1, cmpz);
 
-    // 递归
     int left  = buildBVHwithSAH(triangles, nodes, l, Split, n);
     int right = buildBVHwithSAH(triangles, nodes, Split + 1, r, n);
 
@@ -385,7 +356,7 @@ int buildBVHwithSAH(std::vector<Triangle>& triangles, std::vector<BVHNode>& node
 }
 
 mat4 getTransformMatrix(vec3 rotateCtrl, vec3 translateCtrl, vec3 scaleCtrl) {
-    glm::mat4 unit(    // 单位矩阵
+    glm::mat4 unit( 
         glm::vec4(1, 0, 0, 0),
         glm::vec4(0, 1, 0, 0),
         glm::vec4(0, 0, 1, 0),
@@ -411,17 +382,17 @@ float r = 4.0;
 double lastX = 0.0f, lastY = 0.0f;
 bool m_useCursor = false;
 
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-{
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
     if (m_useCursor) return;
+
     frameCounter = 0;
     r += -yoffset * 0.5;
 }
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
     if (m_useCursor) return;
+
     frameCounter = 0;
-    // 调整旋转
     rotatAngle += 150 * (xposIn - lastX) / 512;
     upAngle += 150 * (yposIn - lastY) / 512;
     upAngle = min(upAngle, 89.0f);
@@ -451,7 +422,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* window = glfwCreateWindow(512, 512, "Path Tracing BVH", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(512, 512, "Path Tracing GPU", NULL, NULL);
     if (window == NULL) {
         std::cout << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -479,14 +450,18 @@ int main() {
     cg::Model bunny("assets/models/bunny/bunny.obj");
     addModel(bunny, triangles, m, getTransformMatrix(vec3(0, 0, 0), vec3(0, -1.5, 0), vec3(1.0, 1.0, 1.0)),true);
 
-    m.baseColor = vec3(0.725, 0.71, 0.68);
+    m.baseColor = cg::Color::Grey;
     cg::Model floor("assets/models/floor/floor.obj");
     addModel(floor, triangles, m, getTransformMatrix(vec3(0, 0, 0), vec3(0, -1.5, 0), vec3(10.0, 1.0, 10.0)), false);
 
-    // m.baseColor = vec3(1, 1, 1);
-    // m.emissive = vec3(30, 20, 10);
-    // cg::Model cube("assets/models/cubr/cube.obj");
-    // addModel(cube, triangles, m, getTransformMatrix(vec3(0, 0, 0), vec3(0.0, 0.0, 0.0), vec3(1,1, 1)), false);
+    m.baseColor = cg::Color::LightSkyBlue;
+    cg::Model mary("assets/models/mary/mary.obj");
+    addModel(mary, triangles, m, getTransformMatrix(vec3(0, 0, 0), vec3(1.5, -1.5, 0.0), vec3(1.0, 1.0, 1.0)), true);
+
+    m.baseColor = cg::Color::White;
+    m.emissive = vec3(30, 20, 10);
+    cg::Model sphere("assets/models/sphere/sphere-simple.obj");
+    addModel(sphere, triangles, m, getTransformMatrix(vec3(0, 0, 0), vec3(-1.5, 0.0, 0.0), vec3(0.5, 0.5, 0.5)), false);
 
     int nTriangles = triangles.size();
     std::cout << "Completed load all models, triangle nums: " << nTriangles << std::endl;
@@ -508,15 +483,12 @@ int main() {
     for (int i = 0; i < nTriangles; i++) {
         Triangle& t = triangles[i];
         Material& m = t.material;
-        // 顶点位置
         triangles_encoded[i].p1 = t.p1;
         triangles_encoded[i].p2 = t.p2;
         triangles_encoded[i].p3 = t.p3;
-        // 顶点法线
         triangles_encoded[i].n1 = t.n1;
         triangles_encoded[i].n2 = t.n2;
         triangles_encoded[i].n3 = t.n3;
-        // 材质
         triangles_encoded[i].emissive = m.emissive;
         triangles_encoded[i].baseColor = m.baseColor;
         triangles_encoded[i].param1 = vec3(m.subsurface, m.metallic, m.specular);
@@ -536,7 +508,6 @@ int main() {
 
 
     // setup texture
-    // 三角形数组
     GLuint tbo0;
     glGenBuffers(1, &tbo0);
     glBindBuffer(GL_TEXTURE_BUFFER, tbo0);
@@ -545,7 +516,6 @@ int main() {
     glBindTexture(GL_TEXTURE_BUFFER, trianglesTextureBuffer);
     glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32F, tbo0);
 
-    // BVHNode 数组
     GLuint tbo1;
     glGenBuffers(1, &tbo1);
     glBindBuffer(GL_TEXTURE_BUFFER, tbo1);
@@ -554,8 +524,6 @@ int main() {
     glBindTexture(GL_TEXTURE_BUFFER, nodesTextureBuffer);
     glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32F, tbo1);
 
-    // hdr 全景图
-    // stbi_set_flip_vertically_on_load(true);
     int width, height, nrComponents;
     float *data = stbi_loadf("assets/textures/hdr/newport_loft.hdr", &width, &height, &nrComponents, 0);
     if (data) {
@@ -569,10 +537,9 @@ int main() {
     }
 
 
-    // 管线配置
+    // Pipeline
     cg::Shader pass1Shader("assets/shaders/GLSL/pt_vert.glsl", "assets/shaders/GLSL/pt_pass1_frag.glsl");
     pass1.program = pass1Shader.ID;
-    //pass1.width = pass1.height = 256;
     pass1.colorAttachments.push_back(getTextureRGB32F(pass1.width, pass1.height));
     pass1.colorAttachments.push_back(getTextureRGB32F(pass1.width, pass1.height));
     pass1.colorAttachments.push_back(getTextureRGB32F(pass1.width, pass1.height));
@@ -597,20 +564,19 @@ int main() {
 
     while (!glfwWindowShouldClose(window)) {
         // render
-        // ------
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-        // 相机参数
+        // camera settings
         vec3 eye = vec3(-sin(radians(rotatAngle)) * cos(radians(upAngle)), sin(radians(upAngle)), cos(radians(rotatAngle)) * cos(radians(upAngle)));
         eye.x *= r; eye.y *= r; eye.z *= r;
-        mat4 cameraRotate = lookAt(eye, vec3(0, 0, 0), vec3(0, 1, 0));  // 相机注视着原点
-        cameraRotate = inverse(cameraRotate);   // lookat 的逆矩阵将光线方向进行转换
+        mat4 cameraRotate = lookAt(eye, vec3(0, 0, 0), vec3(0, 1, 0));
+        cameraRotate = inverse(cameraRotate);
         glUseProgram(pass1.program);
         glUniform3fv(glGetUniformLocation(pass1.program, "eye"), 1, value_ptr(eye));
         glUniformMatrix4fv(glGetUniformLocation(pass1.program, "cameraRotate"), 1, GL_FALSE, value_ptr(cameraRotate));
-        glUniform1i(glGetUniformLocation(pass1.program, "frameCounter"), frameCounter++);// 传计数器用作随机种子
+        glUniform1i(glGetUniformLocation(pass1.program, "frameCounter"), frameCounter++);  // random seed
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_BUFFER, trianglesTextureBuffer);
@@ -628,7 +594,6 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, hdrMap);
         glUniform1i(glGetUniformLocation(pass1.program, "hdrMap"), 3);
 
-        // 绘制
         pass1.draw();
         pass2.draw(pass1.colorAttachments);
         pass3.draw(pass2.colorAttachments);
