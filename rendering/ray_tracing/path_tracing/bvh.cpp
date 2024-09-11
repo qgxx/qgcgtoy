@@ -18,6 +18,8 @@
 
 using namespace glm;
 
+#define FLT_INF 114514.0f
+
 std::vector<vec3> vertices;
 int vertices_num = 0;
 std::vector<GLuint> indices;
@@ -53,7 +55,7 @@ bool cmpz(const Triangle& t1, const Triangle& t2) {
 
 struct HitResult {
     Triangle* triangle = NULL;
-    float distance = FLT_MAX;
+    float distance = FLT_INF;
 };
 
 struct Ray {
@@ -107,10 +109,10 @@ float hitTriangle(Triangle* triangle, Ray ray) {
     vec3 N = normalize(cross(p2 - p1, p3 - p1)); 
     if (dot(N, d) > 0.0f) N = -N; 
 
-    if (fabs(dot(N, d)) < 0.00001f) return FLT_MAX;
+    if (fabs(dot(N, d)) < 0.00001f) return FLT_INF;
 
     float t = (dot(N, p1) - dot(S, N)) / dot(d, N);
-    if (t < 0.0005f) return FLT_MAX; 
+    if (t < 0.0005f) return FLT_INF; 
 
     vec3 P = S + d * t;
 
@@ -120,7 +122,7 @@ float hitTriangle(Triangle* triangle, Ray ray) {
     if (dot(c1, N) > 0 && dot(c2, N) > 0 && dot(c3, N) > 0) return t;
     if (dot(c1, N) < 0 && dot(c2, N) < 0 && dot(c3, N) < 0) return t;
 
-    return FLT_MAX;
+    return FLT_INF;
 }
 
 
@@ -128,8 +130,8 @@ BVHNode* buildBVH(std::vector<Triangle>& triangles, int l, int r, int n) {
     if (l > r) return 0;
 
     BVHNode* node = new BVHNode();
-    node->AA = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
-    node->BB = vec3(FLT_MIN, FLT_MIN, FLT_MIN);
+    node->AA = vec3(FLT_INF, FLT_INF, FLT_INF);
+    node->BB = vec3(-FLT_INF, -FLT_INF, -FLT_INF);
 
     for (int i = l; i <= r; i++) {
         float minx = min(triangles[i].p1.x, min(triangles[i].p2.x, triangles[i].p3.x));
@@ -173,8 +175,8 @@ BVHNode* buildBVHwithSAH(std::vector<Triangle>& triangles, int l, int r, int n) 
     if (l > r) return 0;
 
     BVHNode* node = new BVHNode();
-    node->AA = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
-    node->BB = vec3(FLT_MIN, FLT_MIN, FLT_MIN);
+    node->AA = vec3(FLT_INF, FLT_INF, FLT_INF);
+    node->BB = vec3(-FLT_INF, -FLT_INF, -FLT_INF);
 
     for (int i = l; i <= r; i++) {
         float minx = min(triangles[i].p1.x, min(triangles[i].p2.x, triangles[i].p3.x));
@@ -197,7 +199,7 @@ BVHNode* buildBVHwithSAH(std::vector<Triangle>& triangles, int l, int r, int n) 
         return node;
     }
 
-    float Cost = FLT_MAX;
+    float Cost = FLT_INF;
     int Axis = 0;
     int Split = (l + r) / 2;
     for (int axis = 0; axis < 3; axis++) {
@@ -206,8 +208,8 @@ BVHNode* buildBVHwithSAH(std::vector<Triangle>& triangles, int l, int r, int n) 
         if (axis == 2) std::sort(&triangles[0] + l, &triangles[0] + r + 1, cmpz);
 
 
-        std::vector<vec3> leftMax(r - l + 1, vec3(FLT_MIN, FLT_MIN, FLT_MIN));
-        std::vector<vec3> leftMin(r - l + 1, vec3(FLT_MAX, FLT_MAX, FLT_MAX));
+        std::vector<vec3> leftMax(r - l + 1, vec3(-FLT_INF, -FLT_INF, -FLT_INF));
+        std::vector<vec3> leftMin(r - l + 1, vec3(FLT_INF, FLT_INF, FLT_INF));
 
         // pre process max_xyz and min_xyz in [l, i]
         for (int i = l; i <= r; i++) {
@@ -223,8 +225,8 @@ BVHNode* buildBVHwithSAH(std::vector<Triangle>& triangles, int l, int r, int n) 
             leftMin[i - l].z = min(leftMin[i - l - bias].z, min(t.p1.z, min(t.p2.z, t.p3.z)));
         }
         // pre process max_xyz and min_xyz in [i, r]
-        std::vector<vec3> rightMax(r - l + 1, vec3(FLT_MIN, FLT_MIN, FLT_MIN));
-        std::vector<vec3> rightMin(r - l + 1, vec3(FLT_MAX, FLT_MAX, FLT_MAX));
+        std::vector<vec3> rightMax(r - l + 1, vec3(-FLT_INF, -FLT_INF, -FLT_INF));
+        std::vector<vec3> rightMin(r - l + 1, vec3(FLT_INF, FLT_INF, FLT_INF));
         for (int i = r; i >= l; i--) {
             Triangle& t = triangles[i];
             int bias = (i == r) ? 0 : 1; 
@@ -239,7 +241,7 @@ BVHNode* buildBVHwithSAH(std::vector<Triangle>& triangles, int l, int r, int n) 
         }
 
         // find min split in this axis
-        float cost = FLT_MAX;
+        float cost = FLT_INF;
         int split = l;
         for (int i = l; i <= r - 1; i++) {
             float lenx, leny, lenz;
@@ -296,7 +298,7 @@ HitResult hitTriangleArray(Ray ray, std::vector<Triangle>& triangles, int l, int
     HitResult res;
     for (int i = l; i <= r; i++) {
         float d = hitTriangle(&triangles[i], ray);
-        if (d < FLT_MAX && d < res.distance) {
+        if (d < FLT_INF && d < res.distance) {
             res.distance = d;
             res.triangle = &triangles[i];
         }
@@ -327,7 +329,7 @@ HitResult hitBVH(Ray ray, std::vector<Triangle>& triangles, BVHNode* root) {
         return hitTriangleArray(ray, triangles, root->n, root->n + root->index - 1);
     }
 
-    float d1 = FLT_MAX, d2 = FLT_MAX;
+    float d1 = FLT_INF, d2 = FLT_INF;
     if (root->left) d1 = hitAABB(ray, root->left->AA, root->left->BB);
     if (root->right) d2 = hitAABB(ray, root->right->AA, root->right->BB);
 

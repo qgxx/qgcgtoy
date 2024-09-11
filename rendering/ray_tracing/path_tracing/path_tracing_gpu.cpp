@@ -22,6 +22,8 @@
 
 using namespace glm;
 
+#define FLT_INF 114514.0f
+
 struct Material {
     vec3 emissive = vec3(0, 0, 0);  // light source color
     vec3 baseColor = vec3(1, 1, 1);
@@ -116,12 +118,12 @@ void addModel(cg::Model& model, std::vector<Triangle>& triangles, Material mater
     std::vector<vec3> vertices;
     std::vector<GLuint> indices;
 
-    float maxx = FLT_MIN;
-    float maxy = FLT_MIN;
-    float maxz = FLT_MIN;
-    float minx = FLT_MAX;
-    float miny = FLT_MAX;
-    float minz = FLT_MAX;
+    float maxx = -FLT_INF;
+    float maxy = -FLT_INF;
+    float maxz = -FLT_INF;
+    float minx = FLT_INF;
+    float miny = FLT_INF;
+    float minz = FLT_INF;
 
     for (auto mesh : model.meshes) {
         for (auto vertex : mesh.vertices) {
@@ -194,8 +196,8 @@ int buildBVH(std::vector<Triangle>& triangles, std::vector<BVHNode>& nodes, int 
     nodes.push_back(BVHNode());
     int id = nodes.size() - 1; 
     nodes[id].left = nodes[id].right = nodes[id].n = nodes[id].index = 0;
-    nodes[id].AA = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
-    nodes[id].BB = vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);  // don't use FLT_MIN(some error on opengl)
+    nodes[id].AA = vec3(FLT_INF, FLT_INF, FLT_INF);
+    nodes[id].BB = vec3(-FLT_INF, -FLT_INF, -FLT_INF);  // don't use -FLT_INF(exist some error on opengl)
 
 
     for (int i = l; i <= r; i++) {
@@ -246,8 +248,8 @@ int buildBVHwithSAH(std::vector<Triangle>& triangles, std::vector<BVHNode>& node
     nodes.push_back(BVHNode());
     int id = nodes.size() - 1;   
     nodes[id].left = nodes[id].right = nodes[id].n = nodes[id].index = 0;
-    nodes[id].AA = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
-    nodes[id].BB = vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+    nodes[id].AA = vec3(FLT_INF, FLT_INF, FLT_INF);
+    nodes[id].BB = vec3(-FLT_INF, -FLT_INF, -FLT_INF);
 
     for (int i = l; i <= r; i++) {
         float minx = min(triangles[i].p1.x, min(triangles[i].p2.x, triangles[i].p3.x));
@@ -270,7 +272,7 @@ int buildBVHwithSAH(std::vector<Triangle>& triangles, std::vector<BVHNode>& node
         return id;
     }
 
-    float Cost = FLT_MAX;
+    float Cost = FLT_INF;
     int Axis = 0;
     int Split = (l + r) / 2;
     for (int axis = 0; axis < 3; axis++) {
@@ -278,8 +280,8 @@ int buildBVHwithSAH(std::vector<Triangle>& triangles, std::vector<BVHNode>& node
         if (axis == 1) std::sort(&triangles[0] + l, &triangles[0] + r + 1, cmpy);
         if (axis == 2) std::sort(&triangles[0] + l, &triangles[0] + r + 1, cmpz);
 
-        std::vector<vec3> leftMax(r - l + 1, vec3(FLT_MIN, FLT_MIN, FLT_MIN));
-        std::vector<vec3> leftMin(r - l + 1, vec3(FLT_MAX, FLT_MAX, FLT_MAX));
+        std::vector<vec3> leftMax(r - l + 1, vec3(-FLT_INF, -FLT_INF, -FLT_INF));
+        std::vector<vec3> leftMin(r - l + 1, vec3(FLT_INF, FLT_INF, FLT_INF));
         for (int i = l; i <= r; i++) {
             Triangle& t = triangles[i];
             int bias = (i == l) ? 0 : 1;
@@ -293,8 +295,8 @@ int buildBVHwithSAH(std::vector<Triangle>& triangles, std::vector<BVHNode>& node
             leftMin[i - l].z = min(leftMin[i - l - bias].z, min(t.p1.z, min(t.p2.z, t.p3.z)));
         }
 
-        std::vector<vec3> rightMax(r - l + 1, vec3(FLT_MIN, FLT_MIN, FLT_MIN));
-        std::vector<vec3> rightMin(r - l + 1, vec3(FLT_MAX, FLT_MAX, FLT_MAX));
+        std::vector<vec3> rightMax(r - l + 1, vec3(-FLT_INF, -FLT_INF, -FLT_INF));
+        std::vector<vec3> rightMin(r - l + 1, vec3(FLT_INF, FLT_INF, FLT_INF));
         for (int i = r; i >= l; i--) {
             Triangle& t = triangles[i];
             int bias = (i == r) ? 0 : 1;
@@ -308,7 +310,7 @@ int buildBVHwithSAH(std::vector<Triangle>& triangles, std::vector<BVHNode>& node
             rightMin[i - l].z = min(rightMin[i - l + bias].z, min(t.p1.z, min(t.p2.z, t.p3.z)));
         }
 
-        float cost = FLT_MAX;
+        float cost = FLT_INF;
         int split = l;
         for (int i = l; i <= r - 1; i++) {
             float lenx, leny, lenz;

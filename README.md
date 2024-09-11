@@ -51,7 +51,7 @@ and drag the left mouse button to rotate the camera.
 ![Toon](./assets/results/toon-style.gif)  
 #### Gooch
 ![Gooch](./assets/results/gooch-style.gif)  
-#### Gooch + Sobel
+#### Sobel Filter and Edge Detection
 ![Sobel](./assets/results/sobel.gif)  
 #### Hatching
 ![Hatching](./assets/results/hatching.gif)  
