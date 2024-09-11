@@ -195,7 +195,7 @@ int buildBVH(std::vector<Triangle>& triangles, std::vector<BVHNode>& nodes, int 
     int id = nodes.size() - 1; 
     nodes[id].left = nodes[id].right = nodes[id].n = nodes[id].index = 0;
     nodes[id].AA = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
-    nodes[id].BB = vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+    nodes[id].BB = vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);  // don't use FLT_MIN(some error on opengl)
 
 
     for (int i = l; i <= r; i++) {
