@@ -12,7 +12,7 @@
 using namespace glm;
 using namespace std;
 
-const int SAMPLE = 1024;  // SPP
+const int SAMPLE = 2048;  // SPP
 
 const double BRIGHTNESS = (2.0f * 3.1415926f) * (1.0f / double(SAMPLE));
 

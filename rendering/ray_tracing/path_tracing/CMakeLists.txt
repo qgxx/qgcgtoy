@@ -9,3 +9,11 @@ ${PROJECT_SOURCE_DIR}/external/src/glad/src/glad.c)
 target_link_libraries(bvh ${assimp-vc143-mt_LIBRARY} 
 ${glfw3_LIBRARY} 
 ${glm_LIBRARY})
+
+
+add_executable(path_tracing_gpu path_tracing_gpu.cpp 
+${PROJECT_SOURCE_DIR}/external/src/glad/src/glad.c)
+
+target_link_libraries(path_tracing_gpu ${assimp-vc143-mt_LIBRARY} 
+${glfw3_LIBRARY} 
+${glm_LIBRARY})

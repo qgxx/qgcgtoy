@@ -129,7 +129,7 @@ BVHNode* buildBVH(std::vector<Triangle>& triangles, int l, int r, int n) {
 
     BVHNode* node = new BVHNode();
     node->AA = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
-    node->BB = vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+    node->BB = vec3(FLT_MIN, FLT_MIN, FLT_MIN);
 
     for (int i = l; i <= r; i++) {
         float minx = min(triangles[i].p1.x, min(triangles[i].p2.x, triangles[i].p3.x));
@@ -174,7 +174,7 @@ BVHNode* buildBVHwithSAH(std::vector<Triangle>& triangles, int l, int r, int n) 
 
     BVHNode* node = new BVHNode();
     node->AA = vec3(FLT_MAX, FLT_MAX, FLT_MAX);
-    node->BB = vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+    node->BB = vec3(FLT_MIN, FLT_MIN, FLT_MIN);
 
     for (int i = l; i <= r; i++) {
         float minx = min(triangles[i].p1.x, min(triangles[i].p2.x, triangles[i].p3.x));
@@ -206,7 +206,7 @@ BVHNode* buildBVHwithSAH(std::vector<Triangle>& triangles, int l, int r, int n) 
         if (axis == 2) std::sort(&triangles[0] + l, &triangles[0] + r + 1, cmpz);
 
 
-        std::vector<vec3> leftMax(r - l + 1, vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX));
+        std::vector<vec3> leftMax(r - l + 1, vec3(FLT_MIN, FLT_MIN, FLT_MIN));
         std::vector<vec3> leftMin(r - l + 1, vec3(FLT_MAX, FLT_MAX, FLT_MAX));
 
         // pre process max_xyz and min_xyz in [l, i]
@@ -223,7 +223,7 @@ BVHNode* buildBVHwithSAH(std::vector<Triangle>& triangles, int l, int r, int n) 
             leftMin[i - l].z = min(leftMin[i - l - bias].z, min(t.p1.z, min(t.p2.z, t.p3.z)));
         }
         // pre process max_xyz and min_xyz in [i, r]
-        std::vector<vec3> rightMax(r - l + 1, vec3(-FLT_MAX, -FLT_MAX, -FLT_MAX));
+        std::vector<vec3> rightMax(r - l + 1, vec3(FLT_MIN, FLT_MIN, FLT_MIN));
         std::vector<vec3> rightMin(r - l + 1, vec3(FLT_MAX, FLT_MAX, FLT_MAX));
         for (int i = r; i >= l; i--) {
             Triangle& t = triangles[i];
@@ -408,7 +408,7 @@ int main() {
     }
 
     BVHNode* root = buildBVHwithSAH(triangles, 0, triangles.size() - 1, 8);
-    dfsNlevel(root, 0, 5); 
+    dfsNlevel(root, 0, 5); // bvh aabb line
 
     Ray ray;
     ray.startPoint = vec3(0, 0, 1);
