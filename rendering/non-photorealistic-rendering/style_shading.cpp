@@ -152,7 +152,7 @@ int StyleShading::initialize() {
     hatchingShader = new Shader("assets/shaders/GLSL/default_vert.glsl", "assets/shaders/GLSL/hatching_frag.glsl");
     lightShader = new Shader("assets/shaders/GLSL/light_vert.glsl", "assets/shaders/GLSL/light_frag.glsl");
 
-    teapot = new Model("assets/models/teapot/teapot.obj");
+    teapot = new Model("assets/models/teapot/teapot-simple.obj");
 
 	// configure frame buffer objects
 	// ---------------------------------

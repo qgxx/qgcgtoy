@@ -17,3 +17,11 @@ ${PROJECT_SOURCE_DIR}/external/src/glad/src/glad.c)
 target_link_libraries(path_tracing_gpu ${assimp-vc143-mt_LIBRARY} 
 ${glfw3_LIBRARY} 
 ${glm_LIBRARY})
+
+
+add_executable(disney_principle disney_principle.cpp 
+${PROJECT_SOURCE_DIR}/external/src/glad/src/glad.c)
+
+target_link_libraries(disney_principle ${assimp-vc143-mt_LIBRARY} 
+${glfw3_LIBRARY} 
+${glm_LIBRARY})
