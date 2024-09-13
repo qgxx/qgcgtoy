@@ -47,7 +47,7 @@ int main()
 
     // glfw window creation
     // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Model load test", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -76,12 +76,12 @@ int main()
 
     // build and compile shaders
     // -------------------------
-    Shader ourShader("assets/shaders/GLSL/model_loading_vert.glsl", "assets/shaders/GLSL/model_loading_frag.glsl");
+    Shader ourShader("../assets/shaders/GLSL/model_loading_vert.glsl", "../assets/shaders/GLSL/model_loading_frag.glsl");
 
     // load models
     // -----------
-    Model ourModel("assets/models/Elysia_maid/Elysia.pmx");
-    Model Marry("assets/models/mary/Marry.obj");
+    Model ourModel("../assets/models/Elysia_maid/Elysia.pmx");
+    Model Marry("../assets/models/mary/Marry.obj");
 
     
     // draw in wireframe

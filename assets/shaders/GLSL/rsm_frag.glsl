@@ -24,12 +24,12 @@ layout(std140) uniform randomMap
 
 float shadow(vec4 LightSpaceCoord) {
 
-	 vec3 shadowCoord = LightSpaceCoord.xyz/LightSpaceCoord.w;
-	 shadowCoord = (shadowCoord+1.0)*0.5;
-	 float closet = texture(depthTexture,shadowCoord.xy).r;
-	 float depth = shadowCoord.z;
+	vec3 shadowCoord = LightSpaceCoord.xyz/LightSpaceCoord.w;
+	shadowCoord = (shadowCoord+1.0)*0.5;
+	float closet = texture(depthTexture,shadowCoord.xy).r;
+	float depth = shadowCoord.z;
 
-	 return depth-0.01<closet ? 1.0:0.0;
+	return depth-0.01<closet ? 1.0:0.0;
 }
 
 void main() {
