@@ -13,14 +13,16 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 uniform mat4 lightSpace;
+
 out vec3 kd;
 out vec3 ks;
 out vec3 ka;
-void main(){
- Normal = transpose(inverse(mat3(model))) * aNormal;
- FragPos = vec4(model * vec4(aPos,1.0)).xyz;
- LightSpaceCoord = lightSpace * model * vec4(aPos,1.0);
- gl_Position=projection*view* model*vec4(aPos, 1.0f);
+
+void main() {
+    Normal = transpose(inverse(mat3(model))) * aNormal;
+    FragPos = vec4(model * vec4(aPos,1.0)).xyz;
+    LightSpaceCoord = lightSpace * model * vec4(aPos,1.0);
+    gl_Position=projection*view* model*vec4(aPos, 1.0f);
     kd = ukd;
     ks = uks;
     ka = uka;

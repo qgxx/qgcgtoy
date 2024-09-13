@@ -326,8 +326,8 @@ vec3 FindIntersection(vec3 start,vec3 rayDir,float maxTraceDistance, vec3 hitPos
 
 
 }
-void main(){
-	
+
+void main() {
 	vec3 positionInView = texture(PositionTexture,texCoords).rgb;
 	vec3 normalInView = texture(NormalTexture,texCoords).rgb;
 	vec3 relfectDir = normalize(reflect(positionInView,normalInView));
@@ -351,36 +351,12 @@ void main(){
 
 	vec4 LightPosInView = view*model*vec4(LightPos,1.0);
 	vec3 wi = normalize(vec3(LightPosInView.xyz)-positionInView);
-//
-//    
-//  
+ 
     vec3  hitpos = trace_ray(start,rayDir);
-// 
-//   
-//
-//
-//    vec3 L_indir;
-//    if(hitpos != vec3(0.0)){
-//        L_indir = texture2D(colorTexture,hitpos.st).rgb;
-//    }
-//	
-//    //L_indir = texture2DLod(DownscaledDepth,texCoords,5).rgb;
-//	//L_indir = RayMarch(positionInView,relfectDir)*texture(colorTexture,texCoords).rgb*INV_PI;
-////    Result result = RayMarch2D(positionInView,relfectDir);
-////    if(result.IsHit){
-////        L_indir = texture2D(colorTexture,result.UV / vec2(1024.0,1024.0)).rgb;
-////    
-////    }
-//    
-//
-	//vec3 L = texture(colorTexture,texCoords).rgb*max(dot(normalInView,wi),0.0);
+
     vec3 L = texture(colorTexture,texCoords).rgb;
 	
 	L+=L_indir;
 	vec3 color = pow(clamp(L, vec3(0.0), vec3(1.0)), vec3(1.0 / 2.2));
 	FragColor = vec4(L,1.0);
-//
-
-
-
 }

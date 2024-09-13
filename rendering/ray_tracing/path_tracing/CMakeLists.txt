@@ -25,3 +25,12 @@ ${PROJECT_SOURCE_DIR}/external/src/glad/src/glad.c)
 target_link_libraries(disney_principle ${assimp-vc143-mt_LIBRARY} 
 ${glfw3_LIBRARY} 
 ${glm_LIBRARY})
+
+
+add_executable(path_tracing_mis path_tracing_mis.cpp 
+${PROJECT_SOURCE_DIR}/external/src/glad/src/glad.c 
+${PROJECT_SOURCE_DIR}/framework/utils/load/hdrloader.cpp)
+
+target_link_libraries(path_tracing_mis ${assimp-vc143-mt_LIBRARY} 
+${glfw3_LIBRARY} 
+${glm_LIBRARY})

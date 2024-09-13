@@ -144,10 +144,23 @@
             "externalConsole": false
         },
         {
-            "name": "Path Tracing GPU",
+            "name": "Path Tracing GPU(diffuse brdf)",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/Release/path_tracing_gpu.exe",
+            "args": [
+                ""
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false
+        },
+        {
+            "name": "Path Tracing GPU(disney principle)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Release/disney_principle.exe",
             "args": [
                 ""
             ],

@@ -61,8 +61,12 @@ and drag the left mouse button to rotate the camera.
 ![Path-Tracing](./assets/results/path_tracing.png)  
 #### KVH 
 ![BVH](./assets/results/BVH.png)  
-#### GPU
+#### Path Tracing On GPU
 ![PathTracing GPU](./assets/results/PathTracingGPU.png)  
+#### Disney Principle BRDF
+![Disney BRDF](./assets/results/disney.png)  
+#### Mutli Importance sampling + Low Discrepancy Sequence(Sobol)
+![MIS](./assets/results/mis.png)  
 
 # External Dependencies
 Assimp  
