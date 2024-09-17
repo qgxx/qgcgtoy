@@ -121,7 +121,7 @@ int SSR::initialize() {
 
     // load models
     // -----------
-    sponza = new Model("assets/models/sponza/sponza.obj");
+    sponza = new Model("assets/models/crytek-sponza/sponza.obj");
 
     // configure g-buffer framebuffer
     // ------------------------------

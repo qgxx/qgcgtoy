@@ -14,6 +14,53 @@ class Shader {
 public:
     unsigned int ID;
 
+    Shader(const char* computePath) {
+        std::string computeCode;
+        std::ifstream computeShaderFile;
+
+        // Ensure that ifstream objects can throw exceptions
+        computeShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+        try {
+            // Open file
+            computeShaderFile.open(computePath);
+            std::stringstream cShaderStream;
+
+            // Read file;s buffer contents into streams
+            cShaderStream << computeShaderFile.rdbuf();
+
+            // close file handlers
+            computeShaderFile.close();
+
+            // Convert stream to string
+            computeCode = cShaderStream.str();
+        }
+        catch (std::ifstream::failure e) {
+            std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
+        }
+
+        // Then compile shader
+        const GLchar* computeShaderCode = computeCode.c_str();
+
+        GLuint compute;
+
+        // Compute shader
+        compute = glCreateShader(GL_COMPUTE_SHADER);
+        glShaderSource(compute, 1, &computeShaderCode, NULL);
+        glCompileShader(compute);
+        checkCompileErrors(compute, "COMPUTE");
+
+        // Create the shader program
+        ID = glCreateProgram();
+        glAttachShader(ID, compute);
+
+        glLinkProgram(ID);
+        checkCompileErrors(ID, "PROGRAM");
+
+        // No longer need the shaders, delete them
+        glDeleteShader(compute);
+    }
+
     Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath = nullptr) {
         std::string vertexCode;
         std::string fragmentCode;
