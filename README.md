@@ -68,6 +68,10 @@ and drag the left mouse button to rotate the camera.
 #### Mutli Importance sampling + Low Discrepancy Sequence(Sobol)
 ![MIS](./assets/results/mis.png)  
 
+## Misc
+### Forward Plus
+![Forward Plus](./assets/results/forward_plus.png)  
+
 # External Dependencies
 Assimp  
 glfw  
