@@ -105,19 +105,6 @@
             "externalConsole": false
         },
         {
-            "name": "Reflective Shadow Maps",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/Release/rsm.exe",
-            "args": [
-                ""
-            ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false
-        },
-        {
             "name": "Path Tracing",
             "type": "cppvsdbg",
             "request": "launch",
@@ -161,6 +148,32 @@
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/build/Release/disney_principle.exe",
+            "args": [
+                ""
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false
+        },
+        {
+            "name": "Path Tracing GPU(mutli important sample)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Release/path_tracing_mis.exe",
+            "args": [
+                ""
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false
+        },
+        {
+            "name": "Forward Plus",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/Release/forward_plus.exe",
             "args": [
                 ""
             ],

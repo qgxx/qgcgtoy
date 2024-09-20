@@ -56,7 +56,7 @@ public:
 	}
  
 	// render the mesh
-	void Draw(Shader shader)
+	void Draw(Shader shader, int bias)
 	{
 		// bind appropriate textures
 		unsigned int diffuseNr = 1;
@@ -65,7 +65,7 @@ public:
 		unsigned int heightNr = 1;
 		for (unsigned int i = 0; i < textures.size(); i++)
 		{
-			glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
+			glActiveTexture(GL_TEXTURE0 + i + bias); // active proper texture unit before binding
 											  // retrieve texture number (the N in diffuse_textureN)
 			std::string number;
 			std::string name = textures[i].type;
@@ -80,7 +80,7 @@ public:
  
 													 // now set the sampler to the correct texture unit
  
-			glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
+			glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i + bias);
 			// and finally bind the texture
 			glBindTexture(GL_TEXTURE_2D, textures[i].id);
 		}

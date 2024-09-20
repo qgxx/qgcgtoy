@@ -35,9 +35,6 @@ and drag the left mouse button to rotate the camera.
 ![SSR](./assets/results/SSR1.png)  
 ![SSR](./assets/results/SSR2.png)  
 
-### Reflective Shadow Maps 
-![RSM](./assets/results/RSM.png)  
-
 ## Physically Based Rendering
 
 ### Cook-Torrance BRDF PBR
