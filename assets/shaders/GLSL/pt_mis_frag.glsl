@@ -944,6 +944,6 @@ void main() {
     color = mix(lastColor, color, 1.0/float(frameCounter+1));
 
     // 输出
-    gl_FragData[0] = vec4(color, 1.0);
+    fragColor = vec4(color, 1.0);
     
 }

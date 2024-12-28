@@ -44,8 +44,6 @@ and drag the left mouse button to rotate the camera.
 ![LTC Area Light Source](./assets/results/ltc-area_light.png)
 
 ### Non Photorealistic Rendering
-#### Toon
-![Toon](./assets/results/toon-style.gif)  
 #### Gooch
 ![Gooch](./assets/results/gooch-style.gif)  
 #### Sobel Filter and Edge Detection
